@@ -1,0 +1,46 @@
+{
+  "name": "@malvineous/gamegraphics",
+  "version": "2.1.0",
+  "description": "Convert to and from images and tilesets used by DOS games",
+  "bin": {
+    "gamegfx": "./bin/gamegfx"
+  },
+  "main": "index.js",
+  "scripts": {
+    "test": "./node_modules/mocha/bin/mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/Malvineous/gamegraphicsjs.git"
+  },
+  "keywords": [
+    "camoto",
+    "libgamegraphics",
+    "dos",
+    "ms-dos",
+    "conversion",
+    "tileset",
+    "games",
+    "modding"
+  ],
+  "author": "Adam Nielsen <malvineous@shikadi.net>",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/Malvineous/gamegraphicsjs/issues"
+  },
+  "homepage": "https://github.com/Malvineous/gamegraphicsjs#readme",
+  "dependencies": {
+    "@malvineous/record-io-buffer": "^2.2.0",
+    "pngjs": "^3.3.3"
+  },
+  "devDependencies": {
+    "command-line-args": "^5.0.2",
+    "documentation": "^8.1.2",
+    "eslint": "^5.9.0",
+    "mocha": "^5.2.0",
+    "mocha-eslint": "^4.1.0"
+  },
+  "directories": {
+    "test": "test"
+  }
+}
