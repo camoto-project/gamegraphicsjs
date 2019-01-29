@@ -24,11 +24,14 @@ module.exports = class Image
 	/**
 	 * Create a new image.
 	 *
-	 * @param {Number} width
-	 *   Width of the new image, in pixels.
+	 * @param {Object} dims
+	 *   Dimensions of the new image.
 	 *
-	 * @param {Number} height
-	 *   Height of the new image, in pixels.
+	 * @param {Number} dims.x
+	 *   Image width, in pixels.
+	 *
+	 * @param {Number} dims.y
+	 *   Image height, in pixels.
 	 *
 	 * @param {Uint8Array} content
 	 *   Optional image content to use, in 8bpp linear format.  If omitted, a new
@@ -38,10 +41,9 @@ module.exports = class Image
 	 *   Colour palette to use.  Omit or specify null to use the default VGA
 	 *   palette.
 	 */
-	constructor(width, height, content, palette) {
-		this.width = width;
-		this.height = height;
-		this.pixels = content || new Uint8Array(width * height);
+	constructor(dims, content, palette, hotspot) {
+		this.dims = dims;
+		this.pixels = content || new Uint8Array(dims.x * dims.y);
 		this.palette = palette || createDefaultPalette(256);
 	}
 
@@ -51,7 +53,7 @@ module.exports = class Image
 	 * @param {Number} newPixel
 	 *   Palette index used for any new pixels, if the image is being enlarged.
 	 */
-	resize(newWidth, newHeight, newPixel) {
+	resize(newDims, newPixel) {
 		throw new Error('Not implemented');
 	}
 

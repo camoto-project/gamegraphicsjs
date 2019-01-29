@@ -69,8 +69,7 @@ module.exports = class Image_PNG extends ImageHandler
 			indexedBuffer[i] = png.data[i];
 		}
 		return new Image(
-			png.width,
-			png.height,
+			{x: png.width, y: png.height},
 			indexedBuffer
 		);
 	}
@@ -78,8 +77,8 @@ module.exports = class Image_PNG extends ImageHandler
 	static write(image)
 	{
 		let png = new PNG();
-		png.width = image.width;
-		png.height = image.height;
+		png.width = image.dims.x;
+		png.height = image.dims.y;
 		png.data = new Uint8Array(png.width * png.height * 4);
 		// Temp: Convert to RGBA
 		for (let i = 0; i < image.width * image.height; i++) {
