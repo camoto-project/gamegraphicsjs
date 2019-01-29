@@ -20,9 +20,9 @@
 const Debug = require('../util/utl-debug.js');
 
 /**
- * Base class and defaults for archive format handlers.
+ * Base class and defaults for image format handlers.
  *
- * To implement a new archive file format, this is the class that will be
+ * To implement a new image file format, this is the class that will be
  * extended and its methods replaced with ones that perform the work.
  *
  * @name ImageHandler
@@ -30,7 +30,7 @@ const Debug = require('../util/utl-debug.js');
 module.exports = class ImageHandler
 {
 	/**
-	 * Retrieve information about the archive file format.
+	 * Retrieve information about the image file format.
 	 *
 	 * This must be overridden by all format handlers.  It returns a structure
 	 * detailed below.
@@ -55,10 +55,7 @@ module.exports = class ImageHandler
 			 *   A list of strings with filename expressions matching files that are
 			 *   often in this format.  An examples is ['*.txt', '*.doc', 'file*.bin'].
 			 *
-			 * @property {ArchiveCaps} caps
-			 *   Capability flags indicating what the format can or cannot support.
-			 *
-			 * @property {ArchiveLimits} limits
+			 * @property {ImageLimits} limits
 			 *   Values indicating what limitations apply to this format.
 			 */
 			id: 'unknown',
@@ -100,46 +97,48 @@ module.exports = class ImageHandler
 	}
 
 	/**
-	 * Identify any problems writing the given archive in the current format.
+	 * Identify any problems writing the given image in this format.
 	 *
-	 * @param {Archive} archive
-	 *   Archive to attempt to write in this handler's format.
+	 * @param {Image} image
+	 *   Image to attempt to write in this handler's format.
 	 *
 	 * @return {Array} of strings listing any problems that will prevent the
-	 *   supplied archive from being written in this format.  An empty array
+	 *   supplied image from being written in this format.  An empty array
 	 *   indicates no problems.
 	 */
-	static checkLimits(archive)
+	static checkLimits(image)
 	{
 		const { limits } = this.metadata();
 		let issues = [];
 
-		if (limits.maxFileCount && (archive.files.length > limits.maxFileCount)) {
-			issues.push(`There are ${archive.files.length} files to save, but this `
-				+ `archive format can only store up to ${limits.maxFileCount} files.`);
+		if (
+			(limits.maximumSize.x !== undefined)
+			&& (image.dims.x > limits.maximumSize.x)
+		) {
+			issues.push(`The image's width (${image.dims.x}) is larger than the `
+				+ `maximum of ${limits.maximumSize.x} that this format can handle.`);
 		}
 
-		if (limits.maxFilenameLen) {
-			archive.files.forEach(file => {
-				if (file.name.length > limits.maxFilenameLen) {
-					issues.push(`Filename length is ${file.name.length}, max is `
-						+ `${limits.maxFilenameLen}: ${file.name}`);
-				}
-			});
+		if (
+			(limits.maximumSize.y !== undefined)
+			&& (image.dims.y > limits.maximumSize.y)
+		) {
+			issues.push(`The image's height (${image.dims.y}) is larger than the `
+				+ `maximum of ${limits.maximumSize.y} that this format can handle.`);
 		}
 
-		archive.files.forEach(file => {
-			if (file.nativeSize === 0) {
-				const content = file.getContent();
-				if (content.length !== 0) {
-					Debug.warn(`File ${file.name} has nativeSize unset but content is ` +
-						`${content.length} bytes.  This will cause slow memory ` +
-						`reallocations during archive writes and should be fixed if ` +
-						`possible.`
-					);
-				}
+		// Make sure the image doesn't have too many colours.
+		const maxIndex = 1 << limits.depth;
+		for (let i = 0; i < image.pixels.length; i++) {
+			if (image.pixels[i] >= maxIndex) {
+				const x = i % image.dims.width;
+				const y = i / image.dims.width;
+				issues.push(`The image contains a pixel of colour index `
+					+ `${image.pixels[i]} at (${x},${y}), but this format only supports `
+					+ `images with colour numbers less than ${maxIndex}.`);
+				break;
 			}
-		});
+		}
 
 		return issues;
 	}
@@ -149,17 +148,16 @@ module.exports = class ImageHandler
 	 *
 	 * Some formats store their data across multiple files, and this function
 	 * will return a list of filenames needed, based on the filename and data in
-	 * the main archive file.
+	 * the main image file.
 	 *
-	 * This allows both the filename and archive content to be examined, in case
-	 * either of these are needed to construct the name of the supplementary
-	 * files.
+	 * This allows both the filename and content to be examined, in case either
+	 * of these are needed to construct the name of the supplementary files.
 	 *
 	 * @param {string} name
-	 *   Archive filename.
+	 *   Filename.
 	 *
 	 * @param {Uint8Array} content
-	 *   Archive content.
+	 *   File content.
 	 *
 	 * @return {null} if there are no supplementary files, otherwise an {Object}
 	 *   where each key is an identifier specific to the handler, and the value
@@ -173,16 +171,14 @@ module.exports = class ImageHandler
 	}
 
 	/**
-	 * See if the given archive is in the format supported by this handler.
+	 * See if the given file is in the format supported by this handler.
 	 *
 	 * This is used for format autodetection.
 	 *
-	 * @note More than one handler might report that it supports a file format,
-	 *   such as the case of an empty file, which is a valid empty archive in a
-	 *   number of different file formats.
+	 * @note More than one handler might report that it supports a file format.
 	 *
 	 * @param {Uint8Array} content
-	 *   The archive to examine.
+	 *   The file content to examine.
 	 *
 	 * @return {Boolean} true if the data is definitely in this format, false if
 	 *   it is definitely not in this format, and undefined if the data could not
@@ -194,29 +190,29 @@ module.exports = class ImageHandler
 	}
 
 	/**
-	 * Read the given archive file.
+	 * Read the given image file.
 	 *
 	 * @param {Object} content
-	 *   File content of the map.  The `main` property contains the main file,
+	 *   File content to read.  The `main` property contains the main file,
 	 *   with any other supps as other properties.  Each property is a
 	 *   {Uint8Array}.
 	 *
-	 * @return {Archive} object detailing the contents of the archive file.
+	 * @return {Image} object containing the decoded image data.
 	 */
 	// eslint-disable-next-line no-unused-vars
-	static parse(content) {
+	static read(content) {
 		throw new Error('Not implemented yet.');
 	}
 
 	/**
-	 * Write out an archive file in this format.
+	 * Write out an image file in this format.
 	 *
-	 * @preconditions The archive has already been passed through checkLimits()
+	 * @preconditions The image has already been passed through checkLimits()
 	 *   successfully. If not, the behaviour is undefined and a corrupted file
 	 *   might be produced.
 	 *
-	 * @param {Archive} archive
-	 *   The contents of the file to write.
+	 * @param {Image} image
+	 *   The image to encode.
 	 *
 	 * @return {Object} containing the contents of the file in the `main`
 	 *   property, with any other supp files as other properties.  Each property
@@ -224,7 +220,7 @@ module.exports = class ImageHandler
 	 *   offering for download to the user.
 	 */
 	// eslint-disable-next-line no-unused-vars
-	static generate(archive) {
+	static write(image) {
 		throw new Error('Not implemented yet.');
 	}
 };
