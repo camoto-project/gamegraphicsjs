@@ -18,6 +18,7 @@
  */
 
 const Debug = require('../util/utl-debug.js');
+const Image = require('../images/image.js');
 const ImageHandler = require('../images/imageHandler.js');
 const Palette = require('./palette.js');
 
@@ -86,22 +87,40 @@ module.exports = class Palette_VGA_6bit extends ImageHandler
 			palette[i] = [0, 0, 0, 255];
 			// Convert 6-bit number to 8-bit, but map >=63 to 255.
 			for (let j = 0; j < 3; j++) {
-				const c = Math.min((content.main[p * 3 + j] || 0), 63);
+				const c = Math.min((content.main[p] || 0), 63);
 				palette[i][j] = (c << 2) | (c >> 4);
 				p++;
 			}
 		};
 
-		return palette;
+		return new Image(
+			{x: 0, y: 0},
+			null,
+			palette
+		);
 	}
 
-	static write(palette)
+	/**
+	 * Options:
+	 *   ignoreAlpha: if true, don't complain about alpha values that are != 255.
+	 */
+	static write(image, options = {})
 	{
+		const palette = image.palette;
+		if (!palette) {
+			throw new Error('Cannot write a palette file if the image has no palette!');
+		}
+
 		let content = new Uint8Array(256 * 3);
 		for (let i = 0; i < 256; i++) {
 			content[i * 3 + 0] = palette[i][0] >> 2;
 			content[i * 3 + 1] = palette[i][1] >> 2;
 			content[i * 3 + 2] = palette[i][2] >> 2;
+			if ((options.ignoreAlpha !== true) && (palette[i][3] != 255)) {
+				throw new Error(`Palette entry ${i} has an alpha value of `
+					+ `${palette[i][3]}, but only a value of 255 is possible in this `
+					+ `palette format.`);
+			}
 		}
 
 		return {
