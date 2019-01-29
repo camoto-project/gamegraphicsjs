@@ -46,13 +46,13 @@ module.exports = class Image_VGA_Linear extends ImageHandler
 		try {
 			Debug.push(FORMAT_ID, 'identify');
 
-			if (content.length !== 320 * 200) {
-				Debug.log(`File length ${content.length} is not ${320 * 200} => false`);
-				return false;
+			if (content.length === 320 * 200) {
+				Debug.log(`Correct file size => true`);
+				return true;
 			}
 
-			Debug.log(`Correct file size => true`);
-			return true;
+			Debug.log(`File length ${content.length} is not ${320 * 200} => unsure`);
+			return undefined;
 
 		} finally {
 			Debug.pop();
