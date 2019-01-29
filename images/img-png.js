@@ -38,6 +38,14 @@ module.exports = class Image_PNG extends ImageHandler
 			glob: [
 				'*.png',
 			],
+			limits: {
+				minimumSize: {x: 0, y: 0},
+				maximumSize: {x: undefined, y: undefined},
+				depth: 8,
+				hasPalette: true,
+				paletteDepth: 8,
+				transparentIndex: undefined,
+			},
 		};
 	}
 

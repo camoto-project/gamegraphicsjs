@@ -33,11 +33,10 @@ module.exports = class Image_VGA_Linear extends ImageHandler
 			games: [
 				'TODO',
 			],
-			glob: [
-			],
 			limits: {
-				minimumSize: [0, 0],
-				maximumSize: [undefined, undefined],
+				minimumSize: {x: 0, y: 0},
+				maximumSize: {x: undefined, y: undefined},
+				depth: 8,
 				hasPalette: false,
 			},
 		};

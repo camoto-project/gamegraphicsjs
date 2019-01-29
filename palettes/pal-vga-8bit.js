@@ -33,6 +33,14 @@ module.exports = class Palette_VGA_8bit extends ImageHandler
 			games: [
 				'TODO',
 			],
+			limits: {
+				minimumSize: {x: 0, y: 0},
+				maximumSize: {x: 0, y: 0},
+				depth: 8,
+				hasPalette: true,
+				paletteDepth: 8,
+				transparentIndex: null,
+			},
 		};
 	}
 

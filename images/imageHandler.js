@@ -67,19 +67,34 @@ module.exports = class ImageHandler
 			glob: [],
 			limits: {
 				/**
-				 * @typedef {Object} ArchiveLimits
+				 * @typedef {Object} ImageLimits
 				 *
-				 * @property {Number} maxFilenameLen
-				 *   Number of characters in the filename, including dots.  If the
-				 *   archive can only store normal DOS 8.3 filenames, then this would
-				 *   be 12.  If omitted there is no restriction on filename length.
+				 * @property {Array} minimumSize
+				 *   Two element array containing X and Y dimensions, in pixels, of the
+				 *   minimum permitted image size.
 				 *
-				 * @property {Number} maxFileCount
-				 *   Maximum number of files that can be stored in the archive file, or
-				 *   undefined if there is no maximum limit.
+				 * @property {Array} maximumSize
+				 *   Two element array containing X and Y dimensions, in pixels, of the
+				 *   maximum permitted image size.  One or both elements may be
+				 *   undefined if the format does not provide a specific limit.  If the
+				 *   format does not store pixel data (e.g. it's a palette file) then
+				 *   the max size will be (0,0).
+				 *
+				 * @property {Number} transparentIndex
+				 *   If hasPalette is true, this value is the palette index of a colour
+				 *   that is fixed as transparent, e.g. 255 will mean the last palette
+				 *   entry is treated as fully transparent.  A value of {null} signifies
+				 *   that no colours can be transparent, and a value of {undefined}
+				 *   means that any colour can be transparent based on the alpha value
+				 *   in the palette data itself.  Writing a palette that doesn't fit
+				 *   these limitations will typically result in an error.
 				 */
-				maxFilenameLen: undefined,
-				maxFileCount: undefined,
+				minimumSize: {x: 0, y: 0},
+				maximumSize: {x: undefined, y: undefined},
+				depth: undefined,
+				hasPalette: undefined,
+				paletteDepth: undefined,
+				transparentIndex: undefined,
 			},
 		};
 	}
