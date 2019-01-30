@@ -35,6 +35,21 @@ class Operations
 		console.log(action.padStart(12) + ':', ...params);
 	}
 
+	parseOptions(md, opt) {
+		if (!opt) return {}
+
+		let result = {};
+		opt.forEach(o => {
+			const [name, value] = o.split('=');
+			if (!md.options[name]) {
+				throw new OperationsError(`Unknown option for ${md.id}: ${name}`);
+			}
+			result[name] = value;
+		});
+
+		return result;
+	}
+
 	readFile(params) {
 		if (!params.target) {
 			throw new OperationsError('read: missing filename');
@@ -77,12 +92,13 @@ class Operations
 			}
 		});
 
+		const md = handler.metadata();
+		const options = this.parseOptions(md, params.options);
+
 		return {
-			image: handler.read(content),
-			origFormat: handler.metadata().id,
+			image: handler.read(content, options),
+			origFormat: md.id,
 		};
-		//this.image = handler.read(content);
-		//this.origFormat = handler.metadata().id;
 	}
 
 	read(params) {
@@ -109,8 +125,10 @@ class Operations
 			throw new OperationsError('write: invalid format code: ' + params.format);
 		}
 
-		/*
-		const problems = handler.checkLimits(this.image);
+		const md = handler.metadata();
+		const options = this.parseOptions(md, params.options);
+
+		const problems = handler.checkLimits(this.image, options);
 		if (problems.length) {
 			console.log('There are problems preventing the requested changes from taking place:\n');
 			for (let i = 0; i < problems.length; i++) {
@@ -119,10 +137,9 @@ class Operations
 			console.log('\nPlease correct these issues and try again.\n');
 			throw new OperationsError('write: cannot save due to file format limitations.');
 		}
-		*/
 
 		console.warn('Writing to', params.target, 'as', params.format);
-		const outContent = handler.write(this.image);
+		const outContent = handler.write(this.image, options);
 
 		let promises = [];
 		const suppList = handler.supps(params.target, outContent.main);
@@ -166,7 +183,7 @@ class Operations
 		const content = {
 			main: fs.readFileSync(params.target),
 		};
-		let handlers = GameArchive.findHandler(content.main);
+		let handlers = GameGraphics.findHandler(content.main);
 
 		console.log(handlers.length + ' format handler(s) matched');
 		if (handlers.length === 0) {
@@ -179,7 +196,7 @@ class Operations
 
 			try {
 				const suppList = handler.supps(params.target, content.main);
-				Object.keys(suppList).forEach(id => {
+				if (suppList) Object.keys(suppList).forEach(id => {
 					try {
 						content[id] = fs.readFileSync(suppList[id]);
 					} catch (e) {
@@ -189,16 +206,17 @@ class Operations
 			} catch (e) {
 				console.log(` - Skipping format due to error loading additional files `
 					+ `required:\n   ${e}`);
+				//throw e;
 				return;
 			}
 
-			const tempArch = handler.parse(content);
-			console.log(' - Handler reports archive contains', tempArch.files.length, 'files.');
-			if (tempArch.files.length > 0) {
-				console.log(' - First filename is:', tempArch.files[0].name);
-				if (tempArch.files.length > 1) {
-					console.log(' - Second filename is:', tempArch.files[1].name);
-				}
+			const tempImg = handler.read(content);
+			if (tempImg instanceof GameGraphics.Image) {
+				console.log(` - Handler reports file is a single image with dimensions `
+					+ `${tempImg.dims.x}x${tempImg.dims.y}.`);
+			} else {
+				console.log(' - Handler reports file is a type that this utility does '
+					+ 'not support:', tempImg);
 			}
 		});
 
@@ -217,14 +235,17 @@ Operations.names = {
 	],
 	read: [
 		{ name: 'format', alias: 'f' },
+		{ name: 'options', alias: 'o', lazyMultiple: true },
 		{ name: 'target', defaultOption: true },
 	],
 	readpal: [
 		{ name: 'format', alias: 'f' },
+		{ name: 'options', alias: 'o', lazyMultiple: true },
 		{ name: 'target', defaultOption: true },
 	],
 	write: [
 		{ name: 'format', alias: 'f' },
+		{ name: 'options', alias: 'o', lazyMultiple: true },
 		{ name: 'target', defaultOption: true },
 	],
 };
@@ -245,8 +266,8 @@ function listFormats()
 	GameGraphics.listHandlers().forEach(handler => {
 		const md = handler.metadata();
 		console.log(`${md.id}: ${md.title}`);
-		if (md.params) Object.keys(md.params).forEach(p => {
-			console.log(`  * ${p}: ${md.params[p]}`);
+		if (md.options) Object.keys(md.options).forEach(p => {
+			console.log(`  * ${p}: ${md.options[p]}`);
 		});
 	});
 }
@@ -288,7 +309,7 @@ Commands:
   identify <file>
     Read local <file> and try to work out what image format it is in.
 
-  read [-t format] <file>
+  read [-t format] [-o option1=value,option2=value,...] <file>
     Read <file> from the local filesystem and load it into memory.
 
   readpal [-t format] <file>
@@ -300,7 +321,7 @@ Commands:
 
 Examples:
 
-  gamegfx read -t img-raw-vga vga.bin write -t img-png vga.png
+  gamegfx read -t img-raw-vga -o width=320 vga.bin write -t img-png vga.png
 `);
 		return;
 	}
