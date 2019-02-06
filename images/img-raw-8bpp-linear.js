@@ -21,9 +21,9 @@ const Debug = require('../util/utl-debug.js');
 const ImageHandler = require('./imageHandler.js');
 const Image = require('./image.js');
 
-const FORMAT_ID = 'img-raw-vga';
+const FORMAT_ID = 'img-raw-8bpp-linear';
 
-module.exports = class Image_VGA_Linear extends ImageHandler
+module.exports = class Image_Raw_8bpp_Linear extends ImageHandler
 {
 	static metadata() {
 		return {

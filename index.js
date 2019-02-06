@@ -20,7 +20,7 @@
 const fileTypes = [
 	// These file formats all have signatures so the autodetection is
 	// fast and they are listed first.
-	require('./images/img-raw-vga.js'),
+	require('./images/img-raw-8bpp-linear.js'),
 	require('./images/img-png.js'),
 
 	// These formats require enumeration, sometimes all the way to the
