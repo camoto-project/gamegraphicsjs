@@ -17,8 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const createDefaultPalette = require('../palettes/pal-default.js');
-
 module.exports = class Image
 {
 	/**
@@ -42,9 +40,10 @@ module.exports = class Image
 	 *   palette.
 	 */
 	constructor(dims, content, palette, hotspot) {
-		this.dims = dims;
-		this.pixels = content || new Uint8Array(dims.x * dims.y);
-		this.palette = palette || createDefaultPalette(256);
+		this.dims = dims || {x: 0, y: 0};
+		this.pixels = content || new Uint8Array(this.dims.x * this.dims.y);
+		this.palette = palette || undefined;
+		this.hotspot = hotspot || {x: undefined, y: undefined};
 	}
 
 	/**
