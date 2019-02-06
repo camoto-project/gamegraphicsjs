@@ -39,6 +39,10 @@ module.exports = class Image_VGA_Linear extends ImageHandler
 				depth: 8,
 				hasPalette: false,
 			},
+			options: {
+				width: 'Image width, in pixels',
+				height: 'Image height, in pixels',
+			},
 		};
 	}
 
@@ -61,7 +65,7 @@ module.exports = class Image_VGA_Linear extends ImageHandler
 
 	static read(content, options = {}) {
 		return new Image(
-			options.dims || {x: 320, y: 200},
+			{x: options.width || 320, y: options.height || 200},
 			content.main // @todo: Crop to width*height bytes?
 		);
 	}

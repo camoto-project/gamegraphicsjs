@@ -93,6 +93,7 @@ module.exports = class ImageHandler
 				paletteDepth: undefined,
 				transparentIndex: undefined,
 			},
+			options: {},
 		};
 	}
 
