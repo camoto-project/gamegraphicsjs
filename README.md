@@ -1,5 +1,5 @@
 # gamegraphics.js
-Copyright 2018-2019 Adam Nielsen <<malvineous@shikadi.net>>  
+Copyright 2010-2021 Adam Nielsen <<malvineous@shikadi.net>>  
 
 This is a Javascript library that can read and write the custom image formats
 used by many MS-DOS games from the 1990s.  Both single-image files as well as
@@ -12,7 +12,7 @@ If you wish to use the command-line `gamearch` utility to work with
 game archives directly, you can install the library globally on your
 system:
 
-    npm install -g @malvineous/gamegraphics
+    npm install -g @camoto/gamegraphics
 
 ### Command line interface
 
@@ -36,11 +36,11 @@ To get a list of supported file formats, run:
 If you wish to make use of the library in your own project, install it
 in the usual way:
 
-    npm install @malvineous/gamegraphics
+    npm install @camoto/gamegraphics
 
 See `cli/index.js` for example use.  The quick start is:
 
-    const GameGraphics = require('@malvineous/gamegraphics');
+    const GameGraphics = require('@camoto/gamegraphics');
     
     // Some formats take options.  These are usually values that can vary
     // between files, but they aren't stored in the file itself so they can't
@@ -72,7 +72,7 @@ Clone the repo, and to get started:
 
 Run the tests to make sure everything worked:
 
-    npm test
+    npm run -s test
 
 You're ready to go!  To add a new file format:
 
@@ -94,7 +94,7 @@ You're ready to go!  To add a new file format:
     cause the file produced by your code to be saved to a temporary file in the
     current directory:
     
-        SAVE_FAILED_TEST=1 npm test
+        SAVE_FAILED_TEST=1 npm run -s test
         mv error1.bin test/img-myformat/default.bin
 
 If your file format has any sort of compression or encryption, these algorithms
