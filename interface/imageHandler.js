@@ -158,7 +158,7 @@ export default class ImageHandler
 	 * @param {Uint8Array} content
 	 *   File content.
 	 *
-	 * @return {null} if there are no supplementary files, otherwise an {Object}
+	 * @return `null` if there are no supplementary files, otherwise an `object`
 	 *   where each key is an identifier specific to the handler, and the value
 	 *   is the expected case-insensitive filename.  Don't convert passed names
 	 *   to lowercase, but any changes (e.g. appending a filename extension)
@@ -179,12 +179,26 @@ export default class ImageHandler
 	 * @param {Uint8Array} content
 	 *   The file content to examine.
 	 *
-	 * @return {Boolean} true if the data is definitely in this format, false if
-	 *   it is definitely not in this format, and undefined if the data could not
-	 *   be positively identified but it's possible it is in this format.
+	 * @param {string} filename
+	 *   The archive's filename in case it is relevant, for those formats where
+	 *   the filename extension is significant.
+	 *
+	 * @param {object} options
+	 *   Object with keys matching `this.metadata().options` if present.  Used to
+	 *   supply additional attributes, such as image width and height for formats
+	 *   that don't store this in a file header.
+	 *
+	 * @return {object} with a `.valid` property, set to `true` if the data is
+	 *   definitely in this format, `false` if it is definitely not in this
+	 *   format, and `undefined` if it's possible the data is in this format but
+	 *   there is not enough information to know for certain one way or the other.
+	 *   The returned object also has a `.reason` property containing a technical
+	 *   although user-friendly explanation as to why the data was decreed to be
+	 *   or not be in this format.  This is most useful when uncertain or
+	 *   rejecting content, as the user can then be informed why.
 	 */
 	// eslint-disable-next-line no-unused-vars
-	static identify(content) {
+	static identify(content, filename, options) {
 		return false;
 	}
 
@@ -196,10 +210,15 @@ export default class ImageHandler
 	 *   with any other supps as other properties.  Each property is a
 	 *   {Uint8Array}.
 	 *
+	 * @param {object} options
+	 *   Object with keys matching `this.metadata().options` if present.  Used to
+	 *   supply additional attributes, such as image width and height for formats
+	 *   that don't store this in a file header.
+	 *
 	 * @return {Image} object containing the decoded image data.
 	 */
 	// eslint-disable-next-line no-unused-vars
-	static read(content) {
+	static read(content, options) {
 		throw new Error('Not implemented yet.');
 	}
 
@@ -213,13 +232,18 @@ export default class ImageHandler
 	 * @param {Image} image
 	 *   The image to encode.
 	 *
+	 * @param {object} options
+	 *   Object with keys matching `this.metadata().options` if present.  Used to
+	 *   supply additional attributes, such as image width and height for formats
+	 *   that don't store this in a file header.
+	 *
 	 * @return {Object} containing the contents of the file in the `main`
 	 *   property, with any other supp files as other properties.  Each property
 	 *   is a {Uint8Array} suitable for writing directly to a file on disk or
 	 *   offering for download to the user.
 	 */
 	// eslint-disable-next-line no-unused-vars
-	static write(image) {
+	static write(image, options) {
 		throw new Error('Not implemented yet.');
 	}
 }

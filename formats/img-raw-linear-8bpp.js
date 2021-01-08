@@ -45,7 +45,7 @@ export default class Image_Raw_8bpp_Linear extends ImageHandler
 		};
 	}
 
-	static identify(content, options = {}) {
+	static identify(content, filename, options = {}) {
 		const width = options.width ?? 320;
 		const height = options.height ?? 200;
 

@@ -235,7 +235,7 @@ for (const handler of gamegraphicsFormats) {
 				describe('identify()', function() {
 
 					it('should not negatively identify itself', function() {
-						const result = handler.identify(contentEncoded.main, options);
+						const result = handler.identify(contentEncoded.main, contentEncoded.main.filename, options);
 						assert.ok(result.valid === true || result.valid === undefined);
 					});
 
@@ -246,7 +246,7 @@ for (const handler of gamegraphicsFormats) {
 						if (submd.id === md.id) return;
 
 						it(`should not positively identify ${submd.id} files`, function() {
-							const result = subhandler.identify(contentEncoded, options);
+							const result = subhandler.identify(contentEncoded, contentEncoded.main.filename, options);
 							assert.notEqual(result.valid, true);
 						});
 					}
