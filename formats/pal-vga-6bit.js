@@ -83,7 +83,7 @@ export default class Palette_VGA_6bit extends ImageHandler
 		};
 	}
 
-	static read(content, options) {
+	static read(content) {
 		let palette = new Palette(256);
 
 		for (let i = 0, p = 0; i < 256; i++) {
@@ -94,7 +94,7 @@ export default class Palette_VGA_6bit extends ImageHandler
 				palette[i][j] = (c << 2) | (c >> 4);
 				p++;
 			}
-		};
+		}
 
 		return new Image(
 			{x: 0, y: 0},

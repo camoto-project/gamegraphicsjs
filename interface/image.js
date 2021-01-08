@@ -52,6 +52,7 @@ export default class Image
 	 * @param {Number} newPixel
 	 *   Palette index used for any new pixels, if the image is being enlarged.
 	 */
+	// eslint-disable-next-line no-unused-vars
 	resize(newDims, newPixel) {
 		throw new Error('Not implemented');
 	}

@@ -43,7 +43,7 @@ class Operations
 	}
 
 	parseOptions(md, opt) {
-		if (!opt) return {}
+		if (!opt) return {};
 
 		let result = {};
 		opt.forEach(o => {
