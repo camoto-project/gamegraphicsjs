@@ -1,0 +1,73 @@
+{
+	"env": {
+		"browser": true,
+		"es6": true,
+		"node": true
+	},
+	"extends": "eslint:recommended",
+	"parserOptions": {
+		"ecmaVersion": 2020,
+		"sourceType": "module"
+	},
+	"rules": {
+		"indent": [
+			"error",
+			"tab", {
+				"SwitchCase": 1
+			}
+		],
+		"linebreak-style": [
+			"error",
+			"unix"
+		],
+		"no-inner-declarations": "off",
+		"quotes": [
+			"error",
+			"single",
+			{
+				"allowTemplateLiterals": true
+			}
+		],
+		"no-unused-vars": [
+			"error",
+			{
+				"varsIgnorePattern": "debug"
+			}
+		],
+		"semi": [
+			"error",
+			"always"
+		]
+	},
+	"overrides": [
+		{
+			"files": ["cli/**/*.js"],
+			"rules": {
+				"no-console": "off"
+			}
+		},
+		{
+			"files": ["formats/**/*.js"],
+			"rules": {
+				"no-console": [
+					"error",
+					{
+						"allow": ["warn", "error"]
+					}
+				]
+			}
+		},
+		{
+			"files": ["test/**/*.js"],
+			"env": {
+				"mocha": true
+			}
+		},
+		{
+			"files": ["util/debug.js"],
+			"rules": {
+				"no-console": "off"
+			}
+		}
+	]
+}
