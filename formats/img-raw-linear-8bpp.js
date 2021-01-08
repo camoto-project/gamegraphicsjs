@@ -45,11 +45,15 @@ export default class Image_Raw_8bpp_Linear extends ImageHandler
 		};
 	}
 
-	static identify(content) {
-		if (content.length !== 320 * 200) {
+	static identify(content, options = {}) {
+		const width = options.width ?? 320;
+		const height = options.height ?? 200;
+
+		const expSize = width * height;
+		if (content.length !== expSize) {
 			return {
 				valid: false,
-				reason: `File length ${content.length} is not ${320 * 200}.`,
+				reason: `File length ${content.length} is not ${expSize}.`,
 			};
 		}
 
@@ -61,14 +65,14 @@ export default class Image_Raw_8bpp_Linear extends ImageHandler
 
 	static read(content, options = {}) {
 		return new Image(
-			{x: options.width || 320, y: options.height || 200},
-			content.main // @todo: Crop to width*height bytes?
+			{x: options.width ?? 320, y: options.height ?? 200},
+			content.main
 		);
 	}
 
-	static write(image, options = {}) {
+	static write(image) {
 		return {
-			main: image.pixels, // @todo: Crop to width*height bytes?
+			main: image.pixels,
 		};
 	}
 }
