@@ -1,7 +1,7 @@
-/**
- * @file Raw VGA palette with 6-bit values [0..63].
+/*
+ * Raw VGA palette with 6-bit values [0..63].
  *
- * Copyright (C) 2018-2019 Adam Nielsen <malvineous@shikadi.net>
+ * Copyright (C) 2010-2021 Adam Nielsen <malvineous@shikadi.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,14 +17,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const Debug = require('../util/utl-debug.js');
-const Image = require('../images/image.js');
-const ImageHandler = require('../images/imageHandler.js');
-const Palette = require('./palette.js');
-
 const FORMAT_ID = 'pal-vga-6bit';
 
-module.exports = class Palette_VGA_6bit extends ImageHandler
+import Debug from '../util/debug.js';
+const debug = Debug.extend(FORMAT_ID);
+
+import ImageHandler from '../interface/imageHandler.js';
+import Image from '../interface/image.js';
+import Palette from '../interface/palette.js';
+
+export default class Palette_VGA_6bit extends ImageHandler
 {
 	static metadata() {
 		return {
@@ -46,38 +48,39 @@ module.exports = class Palette_VGA_6bit extends ImageHandler
 	}
 
 	static identify(content) {
-		try {
-			Debug.push(FORMAT_ID, 'identify');
+		if (content.length !== 768) {
+			return {
+				valid: false,
+				reason: `File length ${content.length} is not 768.`,
+			};
+		}
 
-			if (content.length !== 768) {
-				Debug.log(`File length ${content.length} is not 768 => false`);
-				return false;
-			}
-
-			if (
-				(content[0] != 0x00)
+		if (
+			(content[0] != 0x00)
 				|| (content[1] != 0x00)
 				|| (content[2] != 0x00)
-			) {
-				Debug.log(`First colour isn't black => false`);
-				return false;
-			}
-
-			for (let i = 0; i < content.length; i++) {
-				// Strictly this should be > 63, but some files use 64 by mistake and
-				// the VGA treats 64 the same as 63.
-				if (content[i] > 64) {
-					Debug.log(`Colour ${i / 3} has value > 64, not 6-bit palette`);
-					return false;
-				}
-			}
-
-			Debug.log(`Correct file size and starts with black => true`);
-			return true;
-
-		} finally {
-			Debug.pop();
+		) {
+			return {
+				valid: false,
+				reason: `First colour isn't black.`,
+			};
 		}
+
+		for (let i = 0; i < content.length; i++) {
+			// Strictly this should be > 63, but some files use 64 by mistake and
+			// the VGA treats 64 the same as 63.
+			if (content[i] > 64) {
+				return {
+					valid: false,
+					reason: `Colour ${i / 3} has value > 64, not 6-bit palette.`,
+				};
+			}
+		}
+
+		return {
+			valid: true,
+			reason: `Correct file size and starts with black.`,
+		};
 	}
 
 	static read(content, options) {
@@ -127,4 +130,4 @@ module.exports = class Palette_VGA_6bit extends ImageHandler
 			main: content,
 		};
 	}
-};
+}

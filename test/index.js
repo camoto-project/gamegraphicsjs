@@ -17,17 +17,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import assert from 'assert';
+import TestUtil from './util.js';
+
+import {
+	all as gamegraphicsFormats,
+	Image,
+	Palette,
+} from '../index.js';
+
 // Skip these tests until the format handlers are improved.
 const skipTests = ['img-png'];
 
-const assert = require('assert');
-const fs = require('fs');
-
-const TestUtil = require('./util.js');
-const GameGraphics = require('../index.js');
-
 // Override the default colours so we can actually see them
-var colors = require('mocha/lib/reporters/base').colors;
+import { colors } from 'mocha/lib/reporters/base.js';
 colors['diff added'] = '1;33';
 colors['diff removed'] = '1;31';
 colors['green'] = '1;32';
@@ -87,7 +90,7 @@ function createStandardMask(width, height, hit) {
 
 function createStandardPalette(transparentIndex)
 {
-	let pal = new GameGraphics.Palette(256);
+	let pal = new Palette(256);
 	for (let i = 0; i < 256; i++) {
 		pal[i] = [
 			(i << 2) % 256,
@@ -103,13 +106,12 @@ function createStandardPalette(transparentIndex)
 	return pal;
 }
 
-const allHandlers = GameGraphics.listHandlers();
-allHandlers.forEach(handler => {
+for (const handler of gamegraphicsFormats) {
 	const md = handler.metadata();
 
 	if (skipTests.some(id => id === md.id)) {
 		it.skip(`Standard tests for ${md.title} [${md.id}]`);
-		return;
+		continue;
 	}
 
 	let testutil = new TestUtil(md.id);
@@ -150,7 +152,7 @@ allHandlers.forEach(handler => {
 					} catch (e) {
 						// Save the expected data if $SAVE_FAILED_TEST is set
 						if (process.env.SAVE_FAILED_TEST == 1) {
-							const testimg = new GameGraphics.Image(
+							const testimg = new Image(
 								dims,
 								createStandardImage(dims.x, dims.y, false),
 								md.limits.hasPalette ? createStandardPalette(md.limits.transparentIndex) : null,
@@ -237,7 +239,7 @@ allHandlers.forEach(handler => {
 				describe('write()', function() {
 					let image;
 					before('generate standard image', function() {
-						image = new GameGraphics.Image(
+						image = new Image(
 							dims,
 							createStandardImage(dims.x, dims.y, false),
 							md.limits.hasPalette ? createStandardPalette(md.limits.transparentIndex) : null,
@@ -261,8 +263,7 @@ allHandlers.forEach(handler => {
 						assert.ok(result === true || result === undefined);
 					});
 
-					const allHandlers = GameGraphics.listHandlers();
-					allHandlers.forEach(subhandler => {
+					for (const subhandler of gamegraphicsFormats) {
 						const submd = subhandler.metadata();
 
 						// Skip ourselves
@@ -272,7 +273,7 @@ allHandlers.forEach(handler => {
 							const result = subhandler.identify(contentEncoded);
 							assert.notEqual(result, true);
 						});
-					});
+					}
 				});
 
 			});
@@ -319,4 +320,4 @@ allHandlers.forEach(handler => {
 		});
 
 	});
-});
+}

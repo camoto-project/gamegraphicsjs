@@ -1,7 +1,7 @@
-/**
- * @file Command line interface to the library.
+/*
+ * Command line interface to the library.
  *
- * Copyright (C) 2018 Adam Nielsen <malvineous@shikadi.net>
+ * Copyright (C) 2010-2021 Adam Nielsen <malvineous@shikadi.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,10 +17,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const fs = require('fs');
-const commandLineArgs = require('command-line-args');
-const GameGraphics = require('../index.js');
-const Debug = require('../util/utl-debug.js');
+import Debug from '../util/debug.js';
+const g_debug = Debug.extend('cli');
+
+import fs from 'fs';
+import commandLineArgs from 'command-line-args';
+import {
+	Image,
+	Palette,
+	all as gamegraphicsFormats,
+	findHandler as gamegraphicsFindHandler,
+} from '../index.js';
 
 class OperationsError extends Error {
 }
@@ -28,7 +35,7 @@ class OperationsError extends Error {
 class Operations
 {
 	constructor() {
-		this.image = new GameGraphics.Image();
+		this.image = new Image();
 	}
 
 	log(action, ...params) {
@@ -57,7 +64,7 @@ class Operations
 
 		let handler;
 		if (params.format) {
-			handler = GameGraphics.getHandler(params.format);
+			handler = gamegraphicsFormats.find(h => h.metadata().id === params.format);
 			if (!handler) {
 				throw new OperationsError('Invalid format code: ' + params.format);
 			}
@@ -67,7 +74,7 @@ class Operations
 			main: fs.readFileSync(params.target),
 		};
 		if (!handler) {
-			let handlers = GameGraphics.findHandler(content.main);
+			let handlers = gamegraphicsFindHandler(content.main, params.target);
 			if (handlers.length === 0) {
 				throw new OperationsError('read: unable to identify this file format.');
 			}
@@ -83,14 +90,17 @@ class Operations
 		}
 
 		const suppList = handler.supps(params.target, content.main);
-		if (suppList) Object.keys(suppList).forEach(id => {
-			try {
-				content[id] = fs.readFileSync(suppList[id]);
-			} catch (e) {
-				throw new OperationsError(`read: unable to open supplementary file `
-					+ `"${suppList[id]}": ${e}`);
+		if (suppList) {
+			for (const [id, suppFilename] of Object.entries(suppList)) {
+				try {
+					content[id] = fs.readFileSync(suppFilename);
+					content[id].filename = suppFilename;
+				} catch (e) {
+					throw new OperationsError(`open: unable to open supplementary file `
+						+ `"${suppFilename}": ${e.message}`);
+				}
 			}
-		});
+		}
 
 		const md = handler.metadata();
 		const options = this.parseOptions(md, params.options);
@@ -107,9 +117,9 @@ class Operations
 
 	readpal(params) {
 		const { image, origFormat } = this.readFile(params);
-		if (image instanceof GameGraphics.Image) {
+		if (image instanceof Image) {
 			this.image.palette = image.palette;
-		} else if (image instanceof GameGraphics.Palette) {
+		} else if (image instanceof Palette) {
 			this.image.palette = image;
 		}
 	}
@@ -120,7 +130,7 @@ class Operations
 		}
 		if (!params.format) params.format = this.origFormat;
 
-		const handler = GameGraphics.getHandler(params.format);
+		const handler = gamegraphicsFormats.find(h => h.metadata().id === params.format);
 		if (!handler) {
 			throw new OperationsError('write: invalid format code: ' + params.format);
 		}
@@ -143,54 +153,36 @@ class Operations
 
 		let promises = [];
 		const suppList = handler.supps(params.target, outContent.main);
-		if (suppList) Object.keys(suppList).forEach(id => {
-			console.warn(' - Saving supplemental file', suppList[id]);
-			promises.push(
-				fs.promises.writeFile(suppList[id], outContent[id])
-			);
-		});
+		if (suppList) {
+			for (const [id, suppFilename] of Object.entries(suppList)) {
+				console.warn(` - Saving supplemental file "${id}" to ${suppFilename}`);
+				promises.push(
+					fs.promises.writeFile(suppFilename, outContent[id])
+				);
+			}
+		}
 		promises.push(fs.promises.writeFile(params.target, outContent.main));
-		return Promise.all(promises);
-	}
 
-	async extract(params) {
-		if (!params.target) {
-			throw new OperationsError('extract: missing filename');
-		}
-
-		const targetName = params.target.toUpperCase(); // nearly always ASCII
-		const targetFile = this.archive.files.find(file => file.name.toUpperCase() == targetName);
-		if (!targetFile) {
-			throw new OperationsError(`extract: archive does not contain "${params.target}"`);
-		}
-		let data;
-		if (params.raw) {
-			data = targetFile.getRaw();
-		} else {
-			data = targetFile.getContent();
-		}
-		this.log('extracting', params.target, params.name ? 'as ' + params.name : '');
-		return fs.promises.writeFile(params.name || params.target, data);
+		return await Promise.all(promises);
 	}
 
 	identify(params) {
 		if (!params.target) {
 			throw new OperationsError('identify: missing filename');
 		}
-		Debug.mute(false);
 
 		console.log('Autodetecting file format...');
 		const content = {
 			main: fs.readFileSync(params.target),
 		};
-		let handlers = GameGraphics.findHandler(content.main);
+		let handlers = gamegraphicsFindHandler(content.main, params.target);
 
 		console.log(handlers.length + ' format handler(s) matched');
 		if (handlers.length === 0) {
 			console.log('No file format handlers were able to identify this file format, sorry.');
 			return;
 		}
-		handlers.forEach(handler => {
+		for (const handler of handlers) {
 			const m = handler.metadata();
 			console.log(`\n>> Trying handler for ${m.id} (${m.title})`);
 
@@ -207,20 +199,18 @@ class Operations
 				console.log(` - Skipping format due to error loading additional files `
 					+ `required:\n   ${e}`);
 				//throw e;
-				return;
+				continue;
 			}
 
 			const tempImg = handler.read(content);
-			if (tempImg instanceof GameGraphics.Image) {
+			if (tempImg instanceof Image) {
 				console.log(` - Handler reports file is a single image with dimensions `
 					+ `${tempImg.dims.x}x${tempImg.dims.y}.`);
 			} else {
 				console.log(' - Handler reports file is a type that this utility does '
-					+ 'not support:', tempImg);
+					+ 'not support:', tempImg.constructor.name);
 			}
-		});
-
-		Debug.mute(true);
+		}
 	}
 }
 
@@ -263,19 +253,18 @@ Object.keys(aliases).forEach(cmd => {
 
 function listFormats()
 {
-	GameGraphics.listHandlers().forEach(handler => {
+	for (const handler of gamegraphicsFormats) {
 		const md = handler.metadata();
 		console.log(`${md.id}: ${md.title}`);
 		if (md.options) Object.keys(md.options).forEach(p => {
 			console.log(`  * ${p}: ${md.options[p]}`);
 		});
-	});
+	}
 }
 
 async function processCommands()
 {
 	let cmdDefinitions = [
-		{ name: 'debug', type: Boolean },
 		{ name: 'help', type: Boolean },
 		{ name: 'formats', type: Boolean },
 		{ name: 'name', defaultOption: true },
@@ -290,8 +279,6 @@ async function processCommands()
 		return;
 	}
 
-	if (cmd.debug) Debug.mute(false);
-
 	if (!cmd.name || cmd.help) {
 		// No params, show help.
 		console.log(`Use: gamegfx --formats | [--debug] [command1 [command2...]]
@@ -300,9 +287,6 @@ Options:
 
   --formats
     List all available file formats.
-
-  --debug
-    Show additional debug information for troubleshooting.
 
 Commands:
 
@@ -322,6 +306,9 @@ Commands:
 Examples:
 
   gamegfx read -t img-raw-vga -o width=320 vga.bin write -t img-png vga.png
+
+  # The DEBUG environment variable can be used for troubleshooting.
+  DEBUG='gamegraphics:*' gamegfx ...
 `);
 		return;
 	}
@@ -351,4 +338,4 @@ Examples:
 	}
 }
 
-processCommands();
+export default processCommands;

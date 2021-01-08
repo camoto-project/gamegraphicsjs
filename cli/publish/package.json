@@ -1,0 +1,14 @@
+{
+  "name": "@camoto/gamegraphics-cli",
+  "version": "1.0.0",
+  "description": "CLI for gamegraphics.js, for use with `npm install -g`",
+  "bin": {
+    "gamegfx": "./node_modules/@camoto/gamegraphics/bin/gamegfx.js"
+  },
+  "author": "Adam Nielsen <malvineous@shikadi.net>",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "@camoto/gamegraphics": "*",
+    "command-line-args": "^5.1.1"
+  }
+}

@@ -1,7 +1,7 @@
-/**
- * @file Main library interface.
+/*
+ * Main library interface.
  *
- * Copyright (C) 2018-2019 Adam Nielsen <malvineous@shikadi.net>
+ * Copyright (C) 2010-2021 Adam Nielsen <malvineous@shikadi.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,92 +17,72 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const fileTypes = [
-	// These file formats all have signatures so the autodetection is
-	// fast and they are listed first.
-	require('./images/img-raw-8bpp-linear.js'),
-	require('./images/img-png.js'),
+import Debug from './util/debug.js';
+const debug = Debug.extend('index');
 
-	// These formats require enumeration, sometimes all the way to the
-	// end of the file, so they are next.
-	require('./palettes/pal-vga-6bit.js'),
-	require('./palettes/pal-vga-8bit.js'),
+import * as formats from './formats/index.js';
 
-	// These formats are so ambiguous that they are often misidentified,
-	// so they are last.
-	// Coming soon :)
+export * from './formats/index.js';
+export { default as Image } from './interface/image.js';
+export { default as Palette } from './interface/palette.js';
+export * from './util/palette-default.js';
+
+/**
+ * Get a list of all the available handlers.
+ *
+ * This is preferable to `import *` because most libraries also export utility
+ * functions like the autodetection routine which would be included even though
+ * they are not format handlers.
+ */
+export const all = [
+	...Object.values(formats),
 ];
 
 /**
- * Main library interface.
+ * Get a handler by examining the file content.
+ *
+ * @param {Uint8Array} content
+ *   Archive file content.
+ *
+ * @param {string} filename
+ *   Filename where `content` was read from.  This is required to identify
+ *   formats where the filename extension is significant.  This can be
+ *   omitted for less accurate autodetection.
+ *
+ * @return {Array<ImageHandler>} from formats/*.js that can handle the
+ *   format, or an empty array if the format could not be identified.
+ *
+ * @example
+ * import { findHandler as gamegraphicsFindHandler } from '@camoto/gamegraphics';
+ * const content = fs.readFileSync('example.png');
+ * const handler = gamegraphicsFindHandler(content, 'example.png');
+ * if (handler.length === 0) {
+ *   console.log('Unable to identify file format.');
+ * } else {
+ *   const md = handler[0].metadata();
+ *   console.log('File is in ' + md.id + ' format');
+ * }
  */
-module.exports = class GameGraphics
-{
-	/**
-	 * Get a handler by ID directly.
-	 *
-	 * @param {string} type
-	 *   Identifier of desired file format.
-	 *
-	 * @return {ArchiveHandler} from formats/*.js matching requested code, or null
-	 *   if the code is invalid.
-	 *
-	 * @example const handler = GameGraphics.getHandler('img-vga');
-	 */
-	static getHandler(type)
-	{
-		return fileTypes.find(x => type === x.metadata().id);
+export function findHandler(content, filename) {
+	if (content.length === undefined) {
+		throw new Error('content parameter must be Uint8Array');
 	}
-
-	/**
-	 * Get a handler by examining the file content.
-	 *
-	 * @param {Uint8Array} content
-	 *   Archive file content.
-	 *
-	 * @return {Array} of {ArchiveHandler} from formats/*.js that can handle the
-	 *   format, or an empty array if the format could not be identified.
-	 *
-	 * @example
-	 * const content = fs.readFileSync('test.pcx');
-	 * const handler = GameGraphics.findHandler(content);
-	 * if (!handler) {
-	 *   console.log('Unable to identify file format.');
-	 * } else {
-	 *   const md = handler.metadata();
-	 *   console.log('File is in ' + md.id + ' format');
-	 * }
-	 */
-	static findHandler(content)
-	{
-		let handlers = [];
-		fileTypes.some(x => {
-			const metadata = x.metadata();
-			const confidence = x.identify(content);
-			if (confidence === true) {
-				handlers = [x];
-				return true; // exit loop early
-			}
-			if (confidence === undefined) {
-				handlers.push(x);
-				// keep going to look for a better match
-			}
-		});
-		return handlers;
+	let handlers = [];
+	for (const x of all) {
+		const metadata = x.metadata();
+		debug(`Trying format handler ${metadata.id} (${metadata.title})`);
+		const confidence = x.identify(content, filename);
+		if (confidence.valid === true) {
+			debug(`Matched ${metadata.id}: ${confidence.reason}`);
+			handlers = [x];
+			break;
+		} else if (confidence.valid === undefined) {
+			debug(`Possible match for ${metadata.id}: ${confidence.reason}`);
+			handlers.push(x);
+			// keep going to look for a better match
+		} else {
+			debug(`Not ${metadata.id}: ${confidence.reason}`);
+		}
 	}
-
-	/**
-	 * Get a list of all the available handlers.
-	 *
-	 * This is probably only useful when testing the library.
-	 *
-	 * @return {Array} of file format handlers, with each element being just like
-	 *   the return value of getHandler().
-	 */
-	static listHandlers() {
-		return fileTypes;
-	}
-};
-
-module.exports.Image = require('./images/image.js');
-module.exports.Palette = require('./palettes/palette.js');
+	return handlers;
+}

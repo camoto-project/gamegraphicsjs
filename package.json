@@ -3,11 +3,12 @@
   "version": "2.1.1",
   "description": "Convert to and from images and tilesets used by DOS games",
   "bin": {
-    "gamegfx": "./bin/gamegfx"
+    "gamegfx": "./bin/gamegfx.js"
   },
   "main": "index.js",
+  "type": "module",
   "scripts": {
-    "test": "./node_modules/mocha/bin/mocha"
+    "test": "mocha"
   },
   "repository": {
     "type": "git",

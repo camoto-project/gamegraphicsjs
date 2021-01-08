@@ -1,7 +1,7 @@
-/**
- * @file Construct default CGA, EGA and VGA palettes.
+/*
+ * Construct default CGA, EGA and VGA palettes.
  *
- * Copyright (C) 2018-2019 Adam Nielsen <malvineous@shikadi.net>
+ * Copyright (C) 2010-2021 Adam Nielsen <malvineous@shikadi.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const Palette = require('./palette.js');
+import Palette from '../interface/palette.js';
 
 /**
  * Create a new palette.
@@ -25,7 +25,7 @@ const Palette = require('./palette.js');
  * @param {Number} length
  *   Number of entries. TODO: which CGA one?  EGA with yucky brown?
  */
-function createDefaultPalette(length)
+export function createDefaultPalette(length)
 {
 	let pal = new Palette(256);
 	for (let i = 0; i < 16; i++) {
@@ -42,5 +42,3 @@ function createDefaultPalette(length)
 
 	return pal;
 }
-
-module.exports = createDefaultPalette;

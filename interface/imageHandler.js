@@ -1,7 +1,7 @@
-/**
- * @file Base class and defaults for image format handlers.
+/*
+ * Base class and defaults for image format handlers.
  *
- * Copyright (C) 2018-2019 Adam Nielsen <malvineous@shikadi.net>
+ * Copyright (C) 2010-2021 Adam Nielsen <malvineous@shikadi.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,8 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const Debug = require('../util/utl-debug.js');
-
 /**
  * Base class and defaults for image format handlers.
  *
@@ -27,7 +25,7 @@ const Debug = require('../util/utl-debug.js');
  *
  * @name ImageHandler
  */
-module.exports = class ImageHandler
+export default class ImageHandler
 {
 	/**
 	 * Retrieve information about the image file format.
@@ -224,4 +222,4 @@ module.exports = class ImageHandler
 	static write(image) {
 		throw new Error('Not implemented yet.');
 	}
-};
+}

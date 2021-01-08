@@ -1,7 +1,7 @@
-/**
- * @file 8bpp linear format handler.
+/*
+ * 8bpp linear format handler.
  *
- * Copyright (C) 2018-2019 Adam Nielsen <malvineous@shikadi.net>
+ * Copyright (C) 2010-2021 Adam Nielsen <malvineous@shikadi.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,22 +17,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const Debug = require('../util/utl-debug.js');
-const ImageHandler = require('./imageHandler.js');
-const Image = require('./image.js');
+const FORMAT_ID = 'img-raw-linear-8bpp';
 
-const FORMAT_ID = 'img-raw-8bpp-linear';
+import Debug from '../util/debug.js';
+const debug = Debug.extend(FORMAT_ID);
 
-module.exports = class Image_Raw_8bpp_Linear extends ImageHandler
+import ImageHandler from '../interface/imageHandler.js';
+import Image from '../interface/image.js';
+
+export default class Image_Raw_8bpp_Linear extends ImageHandler
 {
 	static metadata() {
 		return {
 			...super.metadata(),
 			id: FORMAT_ID,
 			title: 'Raw 8bpp linear image',
-			games: [
-				'TODO',
-			],
 			limits: {
 				minimumSize: {x: 0, y: 0},
 				maximumSize: {x: undefined, y: undefined},
@@ -47,20 +46,17 @@ module.exports = class Image_Raw_8bpp_Linear extends ImageHandler
 	}
 
 	static identify(content) {
-		try {
-			Debug.push(FORMAT_ID, 'identify');
-
-			if (content.length === 320 * 200) {
-				Debug.log(`Correct file size => true`);
-				return true;
-			}
-
-			Debug.log(`File length ${content.length} is not ${320 * 200} => unsure`);
-			return undefined;
-
-		} finally {
-			Debug.pop();
+		if (content.length !== 320 * 200) {
+			return {
+				valid: false,
+				reason: `File length ${content.length} is not ${320 * 200}.`,
+			};
 		}
+
+		return {
+			valid: true,
+			reason: `Correct file size.`,
+		};
 	}
 
 	static read(content, options = {}) {
@@ -75,4 +71,4 @@ module.exports = class Image_Raw_8bpp_Linear extends ImageHandler
 			main: image.pixels, // @todo: Crop to width*height bytes?
 		};
 	}
-};
+}

@@ -1,7 +1,7 @@
-/**
- * @file Image base class.
+/*
+ * Image base class.
  *
- * Copyright (C) 2018-2019 Adam Nielsen <malvineous@shikadi.net>
+ * Copyright (C) 2010-2021 Adam Nielsen <malvineous@shikadi.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-module.exports = class Image
+export default class Image
 {
 	/**
 	 * Create a new image.
@@ -63,4 +63,4 @@ module.exports = class Image
 	clone() {
 		throw new Error('Not implemented');
 	}
-};
+}

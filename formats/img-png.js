@@ -1,7 +1,7 @@
-/**
- * @file Raw VGA palette with 6-bit values [0..63].
+/*
+ * Standard .png image.
  *
- * Copyright (C) 2018-2019 Adam Nielsen <malvineous@shikadi.net>
+ * Copyright (C) 2010-2021 Adam Nielsen <malvineous@shikadi.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,24 +17,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const PNG = require('pngjs').PNG;
-
-const Debug = require('../util/utl-debug.js');
-const ImageHandler = require('./imageHandler.js');
-const Image = require('./image.js');
-
 const FORMAT_ID = 'img-png';
 
-module.exports = class Image_PNG extends ImageHandler
+import Debug from '../util/debug.js';
+const debug = Debug.extend(FORMAT_ID);
+
+import { PNG } from 'pngjs';
+
+import ImageHandler from '../interface/imageHandler.js';
+import Image from '../interface/image.js';
+
+export default class Image_PNG extends ImageHandler
 {
 	static metadata() {
 		return {
 			...super.metadata(),
 			id: FORMAT_ID,
 			title: 'Portable Network Graphic',
-			games: [
-				'TODO',
-			],
 			glob: [
 				'*.png',
 			],
@@ -47,23 +46,6 @@ module.exports = class Image_PNG extends ImageHandler
 				transparentIndex: undefined,
 			},
 		};
-	}
-
-	static identify(content) {
-		try {
-			Debug.push(FORMAT_ID, 'identify');
-
-			if (content.length !== 320 * 200) {
-				Debug.log(`File length ${content.length} is not ${320 * 200} => false`);
-				return false;
-			}
-
-			Debug.log(`Correct file size => true`);
-			return true;
-
-		} finally {
-			Debug.pop();
-		}
 	}
 
 	static read(content) {
@@ -108,4 +90,4 @@ module.exports = class Image_PNG extends ImageHandler
 			}),
 		};
 	}
-};
+}
