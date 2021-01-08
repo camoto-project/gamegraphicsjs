@@ -89,11 +89,18 @@ module.exports = class Image_PNG extends ImageHandler
 		png.height = image.dims.y;
 		png.data = new Uint8Array(png.width * png.height * 4);
 		// Temp: Convert to RGBA
-		for (let i = 0; i < image.width * image.height; i++) {
-			png.data[i * 4 + 0] = image.palette ? image.palette[image.pixels[i]][0] : image.pixels[i];
-			png.data[i * 4 + 1] = image.palette ? image.palette[image.pixels[i]][1] : image.pixels[i];
-			png.data[i * 4 + 2] = image.palette ? image.palette[image.pixels[i]][2] : image.pixels[i];
-			png.data[i * 4 + 3] = image.palette ? image.palette[image.pixels[i]][3] : 255;
+		for (let i = 0; i < png.width * png.height; i++) {
+			if (image.palette && image.palette[image.pixels[i]]) {
+				png.data[i * 4 + 0] = image.palette[image.pixels[i]][0];
+				png.data[i * 4 + 1] = image.palette[image.pixels[i]][1];
+				png.data[i * 4 + 2] = image.palette[image.pixels[i]][2];
+				png.data[i * 4 + 3] = image.palette[image.pixels[i]][3];
+			} else {
+				png.data[i * 4 + 0] = image.pixels[i];
+				png.data[i * 4 + 1] = image.pixels[i];
+				png.data[i * 4 + 2] = image.pixels[i];
+				png.data[i * 4 + 3] = 255;
+			}
 		}
 		return {
 			main: PNG.sync.write(png, {
