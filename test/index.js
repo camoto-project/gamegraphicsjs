@@ -117,7 +117,6 @@ for (const handler of gamegraphicsFormats) {
 	let testutil = new TestUtil(md.id);
 
 	describe(`Standard tests for ${md.title} [${md.id}]`, function() {
-		let content = {};
 
 		describe('metadata()', function() {
 
@@ -140,50 +139,27 @@ for (const handler of gamegraphicsFormats) {
 
 		function testSize(dims, message) {
 			const sizename = dims.x + 'x' + dims.y;
-			describe(`should handle dimensions of ${sizename}`, function () {
+			describe(`should handle dimensions of ${sizename} (${message})`, function () {
+				// Not all format handlers use this, but those that do all use the
+				// same keys.
+				const options = {
+					width: dims.x,
+					height: dims.y,
+				};
+
 				// Load expected image data for these image dimensions
 				let contentEncoded;
 				before(`load expected output from local filesystem`, function () {
-					try {
-						const sizeContent = testutil.loadContent(handler, [
-							sizename,
-						]);
-						contentEncoded = sizeContent[sizename];
-					} catch (e) {
-						// Save the expected data if $SAVE_FAILED_TEST is set
-						if (process.env.SAVE_FAILED_TEST == 1) {
-							const testimg = new Image(
-								dims,
-								createStandardImage(dims.x, dims.y, false),
-								md.limits.hasPalette ? createStandardPalette(md.limits.transparentIndex) : null,
-								undefined
-							);
-							const contentGenerated = handler.write(testimg);
-							for (let i = 1; i <= 20; i++) {
-								const fn = `expected${i}.${md.id}.${sizename}.bin`;
-								if (!fs.existsSync(fn)) {
-									// eslint-disable-next-line no-console
-									console.warn(`** Expected data does not exist, writing it to ${fn}`);
-									fs.writeFileSync(fn, contentGenerated.main);
-									break;
-								}
-							}
-						}
-
-						throw e;
-					}
+					const sizeContent = testutil.loadContent(handler, [
+						sizename,
+					]);
+					contentEncoded = sizeContent[sizename];
 				});
 
 				// Read the image
 				describe('read()', function() {
 					let image;
 					before('should read correctly', function() {
-						// Not all format handlers use this, but those that do all use the
-						// same keys.
-						const options = {
-							dims: dims,
-						};
-
 						image = handler.read(contentEncoded, options);
 						assert.notStrictEqual(image, undefined);
 						assert.notStrictEqual(image, null);
@@ -206,7 +182,7 @@ for (const handler of gamegraphicsFormats) {
 							if (md.limits.paletteDepth < 8) {
 								adjustPrecision = c => c >> (8 - md.limits.paletteDepth);
 							}
-							for (let i = 0, p = 0; i < 256; i++) {
+							for (let i = 0; i < 256; i++) {
 								assert.equal(
 									adjustPrecision(image.palette[i][0]),
 									adjustPrecision(palExp[i][0]),
@@ -250,7 +226,7 @@ for (const handler of gamegraphicsFormats) {
 					});
 
 					it('should write correctly', function() {
-						const contentGenerated = handler.write(image);
+						const contentGenerated = handler.write(image, options);
 
 						TestUtil.contentEqual(contentEncoded, contentGenerated);
 					});
@@ -259,8 +235,8 @@ for (const handler of gamegraphicsFormats) {
 				describe('identify()', function() {
 
 					it('should not negatively identify itself', function() {
-						const result = handler.identify(contentEncoded.main);
-						assert.ok(result === true || result === undefined);
+						const result = handler.identify(contentEncoded.main, options);
+						assert.ok(result.valid === true || result.valid === undefined);
 					});
 
 					for (const subhandler of gamegraphicsFormats) {
@@ -270,8 +246,8 @@ for (const handler of gamegraphicsFormats) {
 						if (submd.id === md.id) return;
 
 						it(`should not positively identify ${submd.id} files`, function() {
-							const result = subhandler.identify(contentEncoded);
-							assert.notEqual(result, true);
+							const result = subhandler.identify(contentEncoded, options);
+							assert.notEqual(result.valid, true);
 						});
 					}
 				});
@@ -315,7 +291,7 @@ for (const handler of gamegraphicsFormats) {
 				&& (maxDims.x > testDims.x)
 				&& (maxDims.y > testDims.y)
 			) {
-				testSize(testDims);
+				testSize(testDims, 'Standard test');
 			}
 		});
 
