@@ -21,11 +21,12 @@ import Palette from '../interface/palette.js';
 
 // Take 2-bit pattern "ab" and convert to 8-bit pattern "abababab".
 // 0 -> 0x00, 1 -> 0x55, 2 -> 0xAA, 3 -> 0xFF.
-const pal2_to_8 = n => n | (n << 2) | (n << 4) | (n << 6);
+export const pal2_to_8 = n => n | (n << 2) | (n << 4) | (n << 6);
 
 // Take 6-bit number and expand to 8-bit.
 // 0 -> 0x00, 0x3F -> 0xFF.
-const pal6_to_8 = n => (n << 2) | (n >> 4);
+export const pal6_to_8 = n => (n << 2) | (n >> 4);
+export const pal8_to_6 = n => n >> 2;
 
 export const CGAPaletteType = {
 	GreenRed:          0x00,

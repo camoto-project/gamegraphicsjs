@@ -237,10 +237,13 @@ export default class ImageHandler
 	 *   supply additional attributes, such as image width and height for formats
 	 *   that don't store this in a file header.
 	 *
-	 * @return {Object} containing the contents of the file in the `main`
-	 *   property, with any other supp files as other properties.  Each property
-	 *   is a {Uint8Array} suitable for writing directly to a file on disk or
-	 *   offering for download to the user.
+	 * @return {Object} containing two properties, `content` and `warnings`.
+	 *   `warnings` is a (possibly empty) array of text strings to show the user
+	 *   to highlight and issues encountered when producing the content, and
+	 *   `content` contains the actual data.  The main file is in `content.main`,
+	 *   with any other supp files as other `content` properties.  Each
+	 *   property is a `Uint8Array` suitable for writing directly to a file on
+	 *   disk or offering for download to the user.
 	 */
 	// eslint-disable-next-line no-unused-vars
 	static write(image, options) {

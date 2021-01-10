@@ -33,9 +33,6 @@ export default class Palette_VGA_8bit extends ImageHandler
 			...super.metadata(),
 			id: FORMAT_ID,
 			title: 'VGA palette (8-bit)',
-			games: [
-				'TODO',
-			],
 			limits: {
 				minimumSize: {x: 0, y: 0},
 				maximumSize: {x: 0, y: 0},
@@ -57,8 +54,8 @@ export default class Palette_VGA_8bit extends ImageHandler
 
 		if (
 			(content[0] != 0x00)
-				|| (content[1] != 0x00)
-				|| (content[2] != 0x00)
+			|| (content[1] != 0x00)
+			|| (content[2] != 0x00)
 		) {
 			return {
 				valid: false,
@@ -108,31 +105,31 @@ export default class Palette_VGA_8bit extends ImageHandler
 		);
 	}
 
-	/**
-	 * Options:
-	 *   ignoreAlpha: if true, don't complain about alpha values that are != 255.
-	 */
-	static write(image, options = {})
+	static write(image)
 	{
 		const palette = image.palette;
 		if (!palette) {
 			throw new Error('Cannot write a palette file if the image has no palette!');
 		}
 
+		let warnings = [];
 		let content = new Uint8Array(256 * 3);
-		for (let i = 0; i < 256; i++) {
-			content[i * 3 + 0] = palette[i][0];
-			content[i * 3 + 1] = palette[i][1];
-			content[i * 3 + 2] = palette[i][2];
-			if ((options.ignoreAlpha !== true) && (palette[i][3] != 255)) {
-				throw new Error(`Palette entry ${i} has an alpha value of `
+		for (let i = 0; i < Math.min(palette.length, 256); i++) {
+			for (let c = 0; c < 3; c++) {
+				content[i * 3 + c] = palette[i][c];
+			}
+			if (palette[i][3] != 255) {
+				warnings.push(`Palette entry ${i} has an alpha value of `
 					+ `${palette[i][3]}, but only a value of 255 is possible in this `
 					+ `palette format.`);
 			}
 		}
 
 		return {
-			main: content,
+			content: {
+				main: content,
+			},
+			warnings,
 		};
 	}
 }
