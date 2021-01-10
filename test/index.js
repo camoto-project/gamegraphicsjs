@@ -173,8 +173,8 @@ for (const handler of gamegraphicsFormats) {
 
 					if (md.limits.hasPalette) {
 						it('should have the correct palette', function() {
-							assert.notStrictEqual(image.palette, undefined);
-							assert.notStrictEqual(image.palette, null);
+							assert.notStrictEqual(image.palette, undefined, 'Palette cannot be undefined');
+							assert.notStrictEqual(image.palette, null, 'Palette cannot be null');
 
 							const palExp = createStandardPalette(md.limits.transparentIndex);
 							// Adjust the precision of the expected value, reducing it if the
@@ -237,7 +237,10 @@ for (const handler of gamegraphicsFormats) {
 
 					it('should not negatively identify itself', function() {
 						const result = handler.identify(contentEncoded.main, contentEncoded.main.filename, options);
-						assert.ok(result.valid === true || result.valid === undefined);
+						assert.ok(
+							result.valid === true || result.valid === undefined,
+							`Failed self-identification with reason: ${result.reason}`
+						);
 					});
 
 					for (const subhandler of gamegraphicsFormats) {
