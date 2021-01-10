@@ -116,7 +116,7 @@ class Operations
 	}
 
 	readpal(params) {
-		const { image, origFormat } = this.readFile(params);
+		const { image } = this.readFile(params);
 		if (image instanceof Image) {
 			this.image.palette = image.palette;
 		} else if (image instanceof Palette) {
