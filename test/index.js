@@ -27,7 +27,8 @@ import {
 } from '../index.js';
 
 // Skip these tests until the format handlers are improved.
-const skipTests = ['img-png'];
+const skipTests = [
+];
 
 // Override the default colours so we can actually see them
 import { colors } from 'mocha/lib/reporters/base.js';
