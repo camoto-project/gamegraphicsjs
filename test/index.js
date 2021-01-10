@@ -183,7 +183,7 @@ for (const handler of gamegraphicsFormats) {
 							if (md.limits.paletteDepth < 8) {
 								adjustPrecision = c => c >> (8 - md.limits.paletteDepth);
 							}
-							for (let i = 0; i < 256; i++) {
+							for (let i = 0; i < image.palette.length; i++) {
 								assert.equal(
 									adjustPrecision(image.palette[i][0]),
 									adjustPrecision(palExp[i][0]),

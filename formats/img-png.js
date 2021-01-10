@@ -72,13 +72,6 @@ export default class Image_PNG extends ImageHandler
 	static read(content) {
 		let png = PNG.sync.read(Buffer.from(content.main), { keepIndexed: true });
 
-		// Convert RGBA to 8bpp
-		let indexedBuffer = new Uint8Array(png.width * png.height);
-		for (let i = 0; i < png.width * png.height; i++) {
-			// TODO: lookup palette or something
-			indexedBuffer[i] = png.data[i];
-		}
-
 		let palette = undefined;
 		if (png.palette) {
 			palette = new Palette(png.palette.length);
@@ -87,12 +80,12 @@ export default class Image_PNG extends ImageHandler
 				palette[i] = png.palette[i];
 			}
 		} else {
-			palette = defaultPalette(this.depth());
+			palette = defaultPalette(png.depth);
 		}
 
 		return new Image(
 			{x: png.width, y: png.height},
-			indexedBuffer,
+			png.data,
 			palette
 		);
 	}
@@ -104,22 +97,24 @@ export default class Image_PNG extends ImageHandler
 		png.height = image.dims.y;
 		png.data = image.pixels;
 
-		png.depth = this.depth();
-		png.palette = [];
-		const maxColours = Math.min(
-			image.palette.length,
-			1 << png.depth
-		);
-		debug(`Palette has ${image.palette.length} colours, writing ${maxColours}.`);
-
-		for (let i = 0; i < image.palette.length; i++) {
-			png.palette[i] = [
-				image.palette[i][0],
-				image.palette[i][1],
-				image.palette[i][2],
-				image.palette[i][3],
-			];
+		let maxPixel = 0;
+		for (const c of image.pixels) {
+			if (c > maxPixel) maxPixel = c;
 		}
+		if (maxPixel >= 16) {
+			png.depth = 8;
+		} else if (maxPixel >= 4) {
+			png.depth = 4;
+		} else if (maxPixel >= 2) {
+			png.depth = 2;
+		} else {
+			png.depth = 1;
+		}
+
+		// We could chop the palette down in size to the last colour actually used,
+		// but often it's nice to have the whole palette exported in a 256 colour
+		// image even if it doesn't use all 256 colours, so we'll leave it.
+		png.palette = image.palette.slice(0, 1 << png.depth);
 
 		let buffer = PNG.sync.write(png, {
 			inputColorType: 3, // we are passing in indexed data
@@ -129,9 +124,5 @@ export default class Image_PNG extends ImageHandler
 		return {
 			main: new Uint8Array(buffer),
 		};
-	}
-
-	static depth() {
-		return 8;
 	}
 }
