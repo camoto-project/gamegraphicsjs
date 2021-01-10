@@ -19,6 +19,14 @@
 
 import Palette from '../interface/palette.js';
 
+// Take 2-bit pattern "ab" and convert to 8-bit pattern "abababab".
+// 0 -> 0x00, 1 -> 0x55, 2 -> 0xAA, 3 -> 0xFF.
+const pal2_to_8 = n => n | (n << 2) | (n << 4) | (n << 6);
+
+// Take 6-bit number and expand to 8-bit.
+// 0 -> 0x00, 0x3F -> 0xFF.
+const pal6_to_8 = n => (n << 2) | (n >> 4);
+
 export const CGAPaletteType = {
 	GreenRed:          0x00,
 	GreenRedBright:    0x80,
@@ -32,13 +40,13 @@ export const CGAPaletteType = {
  * Create a new palette with default hardware colours depending on the given
  * colour depth.
  */
-export function defaultPalette(depth, variant)
+export function defaultPalette(depth)
 {
 	switch (depth) {
 		case 1:
 			return paletteMono();
 		case 2:
-			return paletteCGA4(variant);
+			return paletteCGA4(CGAPaletteType.GreenRed, 0);
 		case 4:
 			return paletteCGA16();
 		case 6:
@@ -57,10 +65,10 @@ export function defaultPalette(depth, variant)
  */
 export function paletteMono()
 {
-	return new Palette([
+	return new Palette(
 		[0x00, 0x00, 0x00, 0xFF],
 		[0xFF, 0xFF, 0xFF, 0xFF],
-	]);
+	);
 }
 
 // These colour codes from the full palette are used in the 4-colour mode.
@@ -89,12 +97,12 @@ export function paletteCGA4(variant, background)
 	let cga = cgaVariants[variant];
 	const full = paletteCGA16();
 
-	return new Palette([
+	return new Palette(
 		full[background ?? 0],
 		full[cga[1]],
 		full[cga[2]],
 		full[cga[3]],
-	]);
+	);
 }
 
 /**
@@ -107,17 +115,13 @@ export function paletteCGA16()
 {
 	let pal = new Palette(16);
 
-	// Take 2-bit pattern "ab" and convert to 8-bit pattern "abababab".
-	// 0 -> 0x00, 1 -> 0x55, 2 -> 0xAA, 3 -> 0xFF.
-	const expand = n => n | (n << 2) | (n << 4) | (n << 6);
-
 	for (let i = 0; i < 16; i++) {
 		// 4 (100) -> 55:01 01 01 01, AA:10 10 10 10
-		const int = (i & 8) >> 6; // on=0b10, off=0b00
+		const int = (i & 8) >> 3; // on=0b1, off=0
 		pal[i] = [
-			expand(int | ((i & 4) >> 2)),
-			expand(int | ((i & 2) >> 1)),
-			expand(int | (i & 1)),
+			pal2_to_8(int | ((i & 4) >> 1)),
+			pal2_to_8(int | ((i & 2) << 0)),
+			pal2_to_8(int | ((i & 1) << 1)),
 			0xFF, // no transparency
 		];
 		if (i == 6) {
@@ -141,12 +145,11 @@ export function paletteEGA64()
 {
 	let pal = new Palette(16);
 
-	const low = 0x55;
 	for (let i = 0; i < 64; i++) {
 		pal[i] = [
-			((i & 4) ? ~low : 0) | ((i & 32) ? low : 0),
-			((i & 2) ? ~low : 0) | ((i & 16) ? low : 0),
-			((i & 1) ? ~low : 0) | ((i & 8) ? low : 0),
+			pal2_to_8(((i & 0x20) >> 5) | ((i & 0x04) >> 1)),
+			pal2_to_8(((i & 0x10) >> 4) | ((i & 0x02) << 0)),
+			pal2_to_8(((i & 0x08) >> 3) | ((i & 0x01) << 1)),
 			0xFF, // no transparency
 		];
 	}
@@ -284,6 +287,13 @@ export function paletteVGA256()
 				(block[base][2] * multiplier) >>> 0,
 				0xFF, // no transparency
 			];
+		}
+	}
+
+	// Expand the above 6-bit values to 8-bit.
+	for (let i = 16; i < 248; i++) {
+		for (let c = 0; c < 3; c++) {
+			pal[i][c] = pal6_to_8(pal[i][c]);
 		}
 	}
 
