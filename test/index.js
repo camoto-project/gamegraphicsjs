@@ -227,7 +227,7 @@ for (const handler of gamegraphicsFormats) {
 					});
 
 					it('should write correctly', function() {
-						const contentGenerated = handler.write(image, options);
+						const { content: contentGenerated } = handler.write(image, options);
 
 						TestUtil.contentEqual(contentEncoded, contentGenerated);
 					});

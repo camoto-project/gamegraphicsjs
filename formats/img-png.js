@@ -122,7 +122,10 @@ export default class Image_PNG extends ImageHandler
 		});
 
 		return {
-			main: new Uint8Array(buffer),
+			content: {
+				main: new Uint8Array(buffer),
+			},
+			warnings: [],
 		};
 	}
 }

@@ -54,7 +54,7 @@ describe(`Extra tests for ${md.title} [${md.id}]`, function() {
 			for (const depth of [1, 2, 4, 8]) {
 				it(`should handle ${depth}-bit images`, function() {
 					const img = genImage(depth);
-					const contentGenerated = handler.write(img);
+					const { content: contentGenerated } = handler.write(img);
 					TestUtil.contentEqual(content[`16x16c${1 << depth}`], contentGenerated);
 				});
 			}

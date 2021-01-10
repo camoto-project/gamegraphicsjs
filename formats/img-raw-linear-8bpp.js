@@ -72,7 +72,10 @@ export default class Image_Raw_8bpp_Linear extends ImageHandler
 
 	static write(image) {
 		return {
-			main: image.pixels,
+			content: {
+				main: image.pixels,
+			},
+			warnings: [],
 		};
 	}
 }
