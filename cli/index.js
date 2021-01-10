@@ -18,7 +18,7 @@
  */
 
 import Debug from '../util/debug.js';
-const g_debug = Debug.extend('cli');
+const debug = Debug.extend('cli');
 
 import fs from 'fs';
 import commandLineArgs from 'command-line-args';
@@ -92,6 +92,7 @@ class Operations
 		const suppList = handler.supps(params.target, content.main);
 		if (suppList) {
 			for (const [id, suppFilename] of Object.entries(suppList)) {
+				debug(`Reading supp "${id}" from: ${suppFilename}`);
 				try {
 					content[id] = fs.readFileSync(suppFilename);
 					content[id].filename = suppFilename;
@@ -149,7 +150,13 @@ class Operations
 		}
 
 		console.warn('Writing to', params.target, 'as', params.format);
-		const outContent = handler.write(this.image, options);
+		let outContent, warnings;
+		try {
+			({ content: outContent, warnings } = handler.write(this.image, options));
+		} catch (e) {
+			debug(e);
+			throw new OperationsError(`save: write() failed - ${e.message}`);
+		}
 
 		let promises = [];
 		const suppList = handler.supps(params.target, outContent.main);
@@ -162,6 +169,13 @@ class Operations
 			}
 		}
 		promises.push(fs.promises.writeFile(params.target, outContent.main));
+
+		if (warnings.length) {
+			console.log('There were warnings generated while saving:\n');
+			for (let i in warnings) {
+				console.log(((i >>> 0) + 1).toString().padStart(2) + '. ' + warnings[i]);
+			}
+		}
 
 		return await Promise.all(promises);
 	}
@@ -321,7 +335,7 @@ Examples:
 			const runOptions = commandLineArgs(def, { argv, stopAtFirstUnknown: true });
 			argv = runOptions._unknown || [];
 			try {
-				proc[cmd.name](runOptions);
+				await proc[cmd.name](runOptions);
 			} catch (e) {
 				if (e instanceof OperationsError) {
 					console.error(e.message);
