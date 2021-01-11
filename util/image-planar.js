@@ -46,6 +46,11 @@ const debug = Debug.extend('image-planar');
  */
 export function fromPlanar({ content, planeCount, planeWidth, planeValues, byteOrderMSB })
 {
+	// Shortcut for 0x0 image.
+	if (content.length === 0) {
+		return new Uint8Array(0);
+	}
+
 	let out = new Uint8Array(content.length * 8 / planeCount);
 	let outpos = 0;
 	const widthBytes = Math.ceil(planeWidth / 8);
@@ -78,6 +83,11 @@ export function fromPlanar({ content, planeCount, planeWidth, planeValues, byteO
  */
 export function toPlanar({ content, planeCount, planeWidth, planeValues, byteOrderMSB })
 {
+	// Shortcut for 0x0 image.
+	if (content.length === 0) {
+		return new Uint8Array(0);
+	}
+
 	let out = new Uint8Array(content.length * planeCount / 8);
 	let outpos = 0;
 	const widthBytes = Math.ceil(planeWidth / 8);
