@@ -25,7 +25,7 @@ const debug = Debug.extend('image-planar');
  *
  * This is used to read mono, CGA and EGA data.
  *
- * @param {Number} planes
+ * @param {Number} planeCount
  *   Plane count, e.g. `4` for 16-colour, `5` for 16-colour masked.
  *
  * @param {Number} planeWidth
@@ -33,30 +33,35 @@ const debug = Debug.extend('image-planar');
  *   next plane after every 8 pixels), set to image width in pixels for
  *   row-planar data (switch to next plane after each row).
  *
+ * @param {Array<Number>} planeValues
+ *   Output value for each plane, e.g. `[1, 2, 4, 8]` for BGRI plane order, or
+ *   `[16, 8, 4, 2, 1]` for MIRGB plane order.  Number of entries must match
+ *   `planeCount`.
+ *
  * @param {boolean} byteOrderMSB
  *   `true` if the most significant bit in each byte is the left-most pixel,
  *   `false` if the least significant bit is the left-most pixel.
  *
  * @return {Uint8Array} 8bpp linear pixel data.
  */
-export function fromPlanar(content, planes, planeWidth, byteOrderMSB)
+export function fromPlanar({ content, planeCount, planeWidth, planeValues, byteOrderMSB })
 {
-	let out = new Uint8Array(content.length * 8 / planes);
+	let out = new Uint8Array(content.length * 8 / planeCount);
 	let outpos = 0;
 	const widthBytes = Math.ceil(planeWidth / 8);
 	if (widthBytes <= 0) {
 		throw new Error(`fromBytePlanar() planeWidth=${planeWidth} too small!`);
 	}
 	for (let i = 0; i < content.length; i += widthBytes) {
-		const plane = (i / widthBytes) % planes;
+		const plane = (i / widthBytes) % planeCount;
 		for (let b = 0; b < planeWidth; b++) {
 			const srcByteOffset = (b / 8) >>> 0;
 			const srcBit = byteOrderMSB ? (7 - (b % 8)) : b % 8;
 			const data = content[i + srcByteOffset];
-			const value = ((data >> srcBit) & 1) << plane;
+			const value = ((data >> srcBit) & 1) && planeValues[plane];
 			out[outpos + b] |= value;
 		}
-		if (plane === planes - 1) outpos += planeWidth;
+		if (plane === planeCount - 1) outpos += planeWidth;
 	}
 
 	return out;
@@ -67,34 +72,24 @@ export function fromPlanar(content, planes, planeWidth, byteOrderMSB)
  *
  * This is used to produce mono, CGA and EGA compatible data.
  *
- * @param {Number} planes
- *   Plane count, e.g. `4` for 16-colour, `5` for 16-colour masked.
- *
- * @param {Number} planeWidth
- *   Width of each plane in pixels.  `8` for byte-planar data (switch to the
- *   next plane after every 8 pixels), set to image width in pixels for
- *   row-planar data (switch to next plane after each row).
- *
- * @param {boolean} byteOrderMSB
- *   `true` if the most significant bit in each byte is the left-most pixel,
- *   `false` if the least significant bit is the left-most pixel.
+ * The parameters are the same as for fromPlanar().
  *
  * @return {Uint8Array} 8bpp linear pixel data.
  */
-export function toPlanar(content, planes, planeWidth, byteOrderMSB)
+export function toPlanar({ content, planeCount, planeWidth, planeValues, byteOrderMSB })
 {
-	let out = new Uint8Array(content.length * planes / 8);
+	let out = new Uint8Array(content.length * planeCount / 8);
 	let outpos = 0;
 	const widthBytes = Math.ceil(planeWidth / 8);
 	for (let i = 0; i < content.length; i++) {
 		const pixelByte = ((i / 8) >> 0) % widthBytes;
 		const pixelBit = byteOrderMSB ? 7 - (i % 8) : (i % 8);
 		const data = content[i];
-		for (let b = 0; b < planes; b++) {
-			const val = ((data >> b) & 1) << pixelBit;
+		for (let b = 0; b < planeCount; b++) {
+			const val = (data & planeValues[b]) && (1 << pixelBit);
 			out[outpos + pixelByte + b * widthBytes] |= val;
 		}
-		if ((i % planeWidth) === planeWidth - 1) outpos += planes * widthBytes;
+		if ((i % planeWidth) === planeWidth - 1) outpos += planeCount * widthBytes;
 	}
 
 	return out;

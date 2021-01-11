@@ -22,16 +22,28 @@ import { fromPlanar, toPlanar } from '../util/image-planar.js';
 
 let testutil = new TestUtil('util/image-planar');
 
-function runTest(msg, { planar, linear, planeCount, planeWidth, isMSB }) {
+function runTest(msg, { planar, linear, planeCount, planeWidth, isMSB, planeValues }) {
 	describe(msg, function() {
 
 		it('fromPlanar()', function() {
-			const actual = fromPlanar(planar, planeCount, planeWidth, isMSB);
+			const actual = fromPlanar({
+				content: planar,
+				planeCount,
+				planeWidth,
+				byteOrderMSB: isMSB,
+				planeValues,
+			});
 			TestUtil.buffersEqual(linear, actual);
 		});
 
 		it('toPlanar()', function() {
-			const actual = toPlanar(linear, planeCount, planeWidth, isMSB);
+			const actual = toPlanar({
+				content: linear,
+				planeCount,
+				planeWidth,
+				byteOrderMSB: isMSB,
+				planeValues,
+			});
 			TestUtil.buffersEqual(planar, actual);
 		});
 
@@ -53,6 +65,7 @@ describe(`Extra tests for util/image-planar`, function() {
 			planeCount: 4,
 			planeWidth: 8,
 			isMSB: true,
+			planeValues: [1, 2, 4, 8],
 		}
 	);
 
@@ -70,6 +83,7 @@ describe(`Extra tests for util/image-planar`, function() {
 			planeCount: 4,
 			planeWidth: 8,
 			isMSB: true,
+			planeValues: [1, 2, 4, 8],
 		}
 	);
 
@@ -89,6 +103,7 @@ describe(`Extra tests for util/image-planar`, function() {
 			planeCount: 4,
 			planeWidth: 16,
 			isMSB: true,
+			planeValues: [1, 2, 4, 8],
 		}
 	);
 
@@ -114,6 +129,7 @@ describe(`Extra tests for util/image-planar`, function() {
 			planeCount: 4,
 			planeWidth: 16,
 			isMSB: true,
+			planeValues: [1, 2, 4, 8],
 		}
 	);
 
@@ -129,6 +145,7 @@ describe(`Extra tests for util/image-planar`, function() {
 			planeCount: 5,
 			planeWidth: 8,
 			isMSB: true,
+			planeValues: [1, 2, 4, 8, 16],
 		}
 	);
 
@@ -146,6 +163,7 @@ describe(`Extra tests for util/image-planar`, function() {
 			planeCount: 5,
 			planeWidth: 8,
 			isMSB: true,
+			planeValues: [1, 2, 4, 8, 16],
 		}
 	);
 
@@ -166,6 +184,7 @@ describe(`Extra tests for util/image-planar`, function() {
 			planeCount: 5,
 			planeWidth: 16,
 			isMSB: true,
+			planeValues: [1, 2, 4, 8, 16],
 		}
 	);
 
@@ -193,6 +212,7 @@ describe(`Extra tests for util/image-planar`, function() {
 			planeCount: 5,
 			planeWidth: 16,
 			isMSB: true,
+			planeValues: [1, 2, 4, 8, 16],
 		}
 	);
 
@@ -208,6 +228,7 @@ describe(`Extra tests for util/image-planar`, function() {
 			planeCount: 6,
 			planeWidth: 8,
 			isMSB: true,
+			planeValues: [1, 2, 4, 8, 16, 32],
 		}
 	);
 
@@ -225,6 +246,7 @@ describe(`Extra tests for util/image-planar`, function() {
 			planeCount: 6,
 			planeWidth: 8,
 			isMSB: true,
+			planeValues: [1, 2, 4, 8, 16, 32],
 		}
 	);
 
@@ -240,6 +262,7 @@ describe(`Extra tests for util/image-planar`, function() {
 			planeCount: 4,
 			planeWidth: 8,
 			isMSB: true,
+			planeValues: [1, 2, 4, 8],
 		}
 	);
 
@@ -255,6 +278,7 @@ describe(`Extra tests for util/image-planar`, function() {
 			planeCount: 4,
 			planeWidth: 8,
 			isMSB: false,
+			planeValues: [1, 2, 4, 8],
 		}
 	);
 
@@ -272,6 +296,7 @@ describe(`Extra tests for util/image-planar`, function() {
 			planeCount: 4,
 			planeWidth: 8,
 			isMSB: true,
+			planeValues: [1, 2, 4, 8],
 		}
 	);
 
@@ -289,6 +314,7 @@ describe(`Extra tests for util/image-planar`, function() {
 			planeCount: 4,
 			planeWidth: 8,
 			isMSB: false,
+			planeValues: [1, 2, 4, 8],
 		}
 	);
 
@@ -308,6 +334,7 @@ describe(`Extra tests for util/image-planar`, function() {
 			planeCount: 4,
 			planeWidth: 16,
 			isMSB: true,
+			planeValues: [1, 2, 4, 8],
 		}
 	);
 
@@ -327,6 +354,39 @@ describe(`Extra tests for util/image-planar`, function() {
 			planeCount: 4,
 			planeWidth: 16,
 			isMSB: false,
+			planeValues: [1, 2, 4, 8],
+		}
+	);
+
+	runTest(
+		`should handle BGRI data (8x1)`,
+		{
+			planar: [
+				0xFF, 0x70, 0x3F, 0x18,
+			],
+			linear: [
+				0x01, 0x03, 0x07, 0x0F, 0x0D, 0x05, 0x05, 0x05,
+			],
+			planeCount: 4,
+			planeWidth: 8,
+			isMSB: true,
+			planeValues: [1, 2, 4, 8],
+		}
+	);
+
+	runTest(
+		`should handle RGBI data (8x1)`,
+		{
+			planar: [
+				0xFF, 0x70, 0x3F, 0x18,
+			],
+			linear: [
+				0x08, 0x0C, 0x0E, 0x0F, 0x0B, 0x0A, 0x0A, 0x0A,
+			],
+			planeCount: 4,
+			planeWidth: 8,
+			isMSB: true,
+			planeValues: [8, 4, 2, 1],
 		}
 	);
 
