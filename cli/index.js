@@ -307,10 +307,11 @@ Commands:
   identify <file>
     Read local <file> and try to work out what image format it is in.
 
-  read [-t format] [-o option1=value,option2=value,...] <file>
-    Read <file> from the local filesystem and load it into memory.
+  read [-t format] [-o option1=value [-o option2=value [...]] <file>
+    Read <file> from the local filesystem and load it into memory. See
+    --formats for available formats and options.
 
-  readpal [-t format] <file>
+  readpal [-t format] [-o option1=value [-o option2=value [...]] <file>
     Use a different palette for the in-memory image, read from <file>.  To save
     a palette on its own, use the 'write' command and specify a palette format.
 
