@@ -106,7 +106,7 @@ available to be used by any file format in this library.
 During development you can test your code like this:
 
     # Convert a sample image to .png and view it with `xv`, with debug messages on
-    $ ./bin/gamegfx --debug read -f img-myformat example.dat write -t img-png out.png && xv out.png
+    $ ./bin/gamegfx --debug read -t img-myformat example.dat write -t img-png out.png && xv out.png
 
     # Make sure the format is identified correctly or if not why not
     $ ./bin/gamegfx --debug identify example.dat

@@ -84,7 +84,7 @@ class Operations
 					const m = h.metadata();
 					console.error(` * ${m.id} (${m.title})`);
 				});
-				throw new OperationsError('read: please use the -f option to specify the format.');
+				throw new OperationsError('read: please use the -t option to specify the format.');
 			}
 			handler = handlers[0];
 		}
@@ -238,17 +238,17 @@ Operations.names = {
 		{ name: 'target', defaultOption: true },
 	],
 	read: [
-		{ name: 'format', alias: 'f' },
+		{ name: 'format', alias: 't' },
 		{ name: 'options', alias: 'o', lazyMultiple: true },
 		{ name: 'target', defaultOption: true },
 	],
 	readpal: [
-		{ name: 'format', alias: 'f' },
+		{ name: 'format', alias: 't' },
 		{ name: 'options', alias: 'o', lazyMultiple: true },
 		{ name: 'target', defaultOption: true },
 	],
 	write: [
-		{ name: 'format', alias: 'f' },
+		{ name: 'format', alias: 't' },
 		{ name: 'options', alias: 'o', lazyMultiple: true },
 		{ name: 'target', defaultOption: true },
 	],
