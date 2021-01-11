@@ -30,19 +30,22 @@ import { pal6_to_8, pal8_to_6 } from '../util/palette-default.js';
 export default class Palette_VGA_6bit extends ImageHandler
 {
 	static metadata() {
-		return {
+		let md = {
 			...super.metadata(),
 			id: FORMAT_ID,
 			title: 'VGA palette (6-bit)',
-			limits: {
-				minimumSize: {x: 0, y: 0},
-				maximumSize: {x: 0, y: 0},
-				depth: 8,
-				hasPalette: true,
-				paletteDepth: 6,
-				transparentIndex: null,
-			},
 		};
+
+		md.limits.minimumSize.x = 0;
+		md.limits.minimumSize.y = 0;
+		md.limits.maximumSize.x = 0,
+		md.limits.maximumSize.y = 0,
+		md.limits.depth = 8;
+		md.limits.hasPalette = true;
+		md.limits.paletteDepth = 6;
+		md.limits.transparentIndex = null;
+
+		return md;
 	}
 
 	static identify(content) {

@@ -28,21 +28,24 @@ import Image from '../interface/image.js';
 export default class Image_Raw_8bpp_Linear extends ImageHandler
 {
 	static metadata() {
-		return {
+		let md = {
 			...super.metadata(),
 			id: FORMAT_ID,
 			title: 'Raw 8bpp linear image',
-			limits: {
-				minimumSize: {x: 0, y: 0},
-				maximumSize: {x: undefined, y: undefined},
-				depth: 8,
-				hasPalette: false,
-			},
 			options: {
 				width: 'Image width, in pixels',
 				height: 'Image height, in pixels',
 			},
 		};
+
+		md.limits.minimumSize.x = 0;
+		md.limits.minimumSize.y = 0;
+		md.limits.maximumSize.x = undefined,
+		md.limits.maximumSize.y = undefined,
+		md.limits.depth = 8;
+		md.limits.hasPalette = false;
+
+		return md;
 	}
 
 	static identify(content, filename, options = {}) {

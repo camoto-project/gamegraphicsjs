@@ -62,34 +62,57 @@ export default class ImageHandler
 			glob: [],
 			limits: {
 				/**
-				 * @typedef {Object} ImageLimits
-				 *
-				 * @property {Array} minimumSize
-				 *   Two element array containing X and Y dimensions, in pixels, of the
-				 *   minimum permitted image size.
-				 *
-				 * @property {Array} maximumSize
-				 *   Two element array containing X and Y dimensions, in pixels, of the
-				 *   maximum permitted image size.  One or both elements may be
-				 *   undefined if the format does not provide a specific limit.  If the
-				 *   format does not store pixel data (e.g. it's a palette file) then
-				 *   the max size will be (0,0).
-				 *
-				 * @property {Number} transparentIndex
-				 *   If hasPalette is true, this value is the palette index of a colour
-				 *   that is fixed as transparent, e.g. 255 will mean the last palette
-				 *   entry is treated as fully transparent.  A value of {null} signifies
-				 *   that no colours can be transparent, and a value of {undefined}
-				 *   means that any colour can be transparent based on the alpha value
-				 *   in the palette data itself.  Writing a palette that doesn't fit
-				 *   these limitations will typically result in an error.
+				 * Two element array containing X and Y dimensions, in pixels, of the
+				 * minimum permitted image size.
 				 */
-				minimumSize: {x: 0, y: 0},
-				maximumSize: {x: undefined, y: undefined},
+				minimumSize: { x: 0, y: 0 },
+
+				/**
+				 * Two element array containing X and Y dimensions, in pixels, of the
+				 * maximum permitted image size.  One or both elements may be
+				 * undefined if the format does not provide a specific limit.  If the
+				 * format does not store pixel data (e.g. it's a palette file) then
+				 * the max size will be (0,0).
+				 */
+				maximumSize: { x: undefined, y: undefined },
+
+				/**
+				 * If the image dimensions can only be a multiple of some number,
+				 * specify it here.  For example planar image data is written as 8
+				 * pixels per byte, so these images must have widths that are a
+				 * multiple of 8 in order to fit in whole bytes.
+				 */
+				multipleSize: { x: 1, y: 1 },
+
+				/**
+				 * Maximum colour depth of images in this format.
+				 * 4 = 16-colour/EGA, 8 = 256-colour/VGA, etc.
+				 */
 				depth: undefined,
+
+				/**
+				 * Can this format store a palette?  `true` if so, `false` if not.
+				 * Note that all images must have a palette specified (even if it's
+				 * just the default one) this only indicates whether that palette will
+				 * be saved with the pixel data or not.
+				 */
 				hasPalette: undefined,
+
+				/**
+				 * How many bits are stored per channel.  Typical values are 6 (0..64)
+				 * for VGA palettes or 8 (0..255) for more modern formats.
+				 * `undefined` if the format cannot store a palette.
+				 */
 				paletteDepth: undefined,
-				transparentIndex: undefined,
+
+				/**
+				 * A palette index for a transparent colour, if this format always has
+				 * the same palette index marked as transparent.  `null` if no colours
+				 * can be transparent, or `undefined` if the transparency comes instead
+				 * from the alpha value in the palette (allowing any colour to play the
+				 * role of transparent.
+				 */
+				transparentIndex: null,
 			},
 			options: {},
 		};

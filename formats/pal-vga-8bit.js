@@ -29,19 +29,22 @@ import Palette from '../interface/palette.js';
 export default class Palette_VGA_8bit extends ImageHandler
 {
 	static metadata() {
-		return {
+		let md = {
 			...super.metadata(),
 			id: FORMAT_ID,
 			title: 'VGA palette (8-bit)',
-			limits: {
-				minimumSize: {x: 0, y: 0},
-				maximumSize: {x: 0, y: 0},
-				depth: 8,
-				hasPalette: true,
-				paletteDepth: 8,
-				transparentIndex: null,
-			},
 		};
+
+		md.limits.minimumSize.x = 0;
+		md.limits.minimumSize.y = 0;
+		md.limits.maximumSize.x = 0,
+		md.limits.maximumSize.y = 0,
+		md.limits.depth = 8;
+		md.limits.hasPalette = true;
+		md.limits.paletteDepth = 8;
+		md.limits.transparentIndex = null;
+
+		return md;
 	}
 
 	static identify(content) {

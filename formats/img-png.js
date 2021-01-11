@@ -32,22 +32,25 @@ import { defaultPalette } from '../util/palette-default.js';
 export default class Image_PNG extends ImageHandler
 {
 	static metadata() {
-		return {
+		let md = {
 			...super.metadata(),
 			id: FORMAT_ID,
 			title: 'Portable Network Graphic',
 			glob: [
 				'*.png',
 			],
-			limits: {
-				minimumSize: {x: 1, y: 1},
-				maximumSize: {x: undefined, y: undefined},
-				depth: 8,
-				hasPalette: true,
-				paletteDepth: 8,
-				transparentIndex: undefined,
-			},
 		};
+
+		md.limits.minimumSize.x = 1;
+		md.limits.minimumSize.y = 1;
+		md.limits.maximumSize.x = undefined,
+		md.limits.maximumSize.y = undefined,
+		md.limits.depth = 8;
+		md.limits.hasPalette = true;
+		md.limits.paletteDepth = 8;
+		md.limits.transparentIndex = undefined;
+
+		return md;
 	}
 
 	static identify(content) {
