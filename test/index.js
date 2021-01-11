@@ -294,6 +294,8 @@ for (const handler of gamegraphicsFormats) {
 				&& (md.limits.minimumSize.y < testDims.y)
 				&& (maxDims.x > testDims.x)
 				&& (maxDims.y > testDims.y)
+				&& (md.limits.multipleSize.x && (testDims.x % md.limits.multipleSize.x === 0))
+				&& (md.limits.multipleSize.y && (testDims.y % md.limits.multipleSize.y === 0))
 			) {
 				testSize(testDims, 'Standard test');
 			}
