@@ -18,7 +18,7 @@
  */
 
 import TestUtil from './util.js';
-import { img_png as handler, Image, Palette, defaultPalette } from '../index.js';
+import { img_png as handler, Image, defaultPalette } from '../index.js';
 
 const md = handler.metadata();
 let testutil = new TestUtil(md.id);

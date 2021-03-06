@@ -63,6 +63,7 @@ function createStandardImage(width, height, cga = false) {
 	return pixels;
 }
 
+// eslint-disable-next-line no-unused-vars
 function createStandardMask(width, height, hit) {
 	let pixels = new Uint8Array(width * height, 0x01);
 	const lastRow = (height - 1) * width;

@@ -20,8 +20,6 @@
 import TestUtil from './util.js';
 import { fromPlanar, toPlanar } from '../util/image-planar.js';
 
-let testutil = new TestUtil('util/image-planar');
-
 function runTest(msg, { planar, linear, planeCount, planeWidth, isMSB, planeValues }) {
 	describe(msg, function() {
 
@@ -51,8 +49,6 @@ function runTest(msg, { planar, linear, planeCount, planeWidth, isMSB, planeValu
 }
 
 describe(`Extra tests for util/image-planar`, function() {
-	let content = {};
-
 	runTest(
 		`should handle 4-plane byte-planar data (8x1)`,
 		{

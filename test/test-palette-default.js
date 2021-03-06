@@ -18,7 +18,6 @@
  */
 
 import assert from 'assert';
-import TestUtil from './util.js';
 import * as DP from '../util/palette-default.js';
 
 const palComponent = ['red', 'green', 'blue', 'alpha'];
