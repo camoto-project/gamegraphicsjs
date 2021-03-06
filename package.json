@@ -31,7 +31,7 @@
   },
   "homepage": "https://github.com/Malvineous/gamegraphicsjs#readme",
   "dependencies": {
-    "@camoto/record-io-buffer": "^2.4.1",
+    "@camoto/record-io-buffer": "^3.0.0",
     "pngjs": "^3.3.3"
   },
   "devDependencies": {
