@@ -1,6 +1,6 @@
 {
   "name": "@camoto/gamegraphics",
-  "version": "2.1.1",
+  "version": "1.0.0",
   "description": "Convert to and from images and tilesets used by DOS games",
   "bin": {
     "gamegfx": "./bin/gamegfx.js"
