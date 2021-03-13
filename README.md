@@ -6,6 +6,25 @@ used by many MS-DOS games from the 1990s.  Both single-image files as well as
 multi-image tilesets are supported.  This library is an attempt to provide a
 unified interface for reading and writing these unique file formats.
 
+## Supported file formats
+
+Due to the significant variation between games, it is recommended to use
+[gameinfo.js](https://github.com/Malvineous/gameinfojs) to access images
+instead.  That library takes care of locating the images within the game's file,
+passing the image handler the correct parameters, and so on.  It uses
+gamegraphics.js internally to load the images but greatly simplifies the
+process.
+
+With gameinfojs you only need pick a game and the image to access (e.g. "title
+screen"), whereas with gamegraphics.js you must extract the right file from any
+archive, supply the correct format identifier, pass any options (such as the
+image width and height for those formats that don't store it) and only then can
+read and write the image.
+
+| Game                      | Types                    | Code                  |
+|---------------------------|--------------------------|-----------------------|
+| Cosmo's Cosmic Adventures | Full-screen images       | img-raw-planar-4bpp   |
+
 ## Installation as an end-user
 
 If you wish to use the command-line `gamearch` utility to work with
@@ -68,20 +87,20 @@ See `cli/index.js` for example use.  The quick start is:
 If you would like to help add more file formats to the library, great!
 Clone the repo, and to get started:
 
-    npm install --dev
+    npm install
 
 Run the tests to make sure everything worked:
 
-    npm run -s test
+    npm test
 
 You're ready to go!  To add a new file format:
 
- 1. Create a new file in the `images/`, `/palettes` or `/tilesets` folder for
-    your format.  Copying an existing file that covers a similar format will
-    help considerably.  If you're not sure, `images/img-raw-vga.js` is a good
-    starting point as it is fairly simple.
+ 1. Create a new file in the `formats` folder for your format.  Copying an
+    existing file that covers a similar format will help considerably.  If
+    you're not sure, `images/img-raw-vga.js` is a good starting point as it is
+    fairly simple.
     
- 2. Edit the main `index.js` and add a `require()` statement for your new file.
+ 2. Edit `formats/index.js` and add an `import` statement for your new file.
     
  3. Make a folder in `test/` for your new format and populate it with
     files similar to the other formats.  The tests work by creating
@@ -94,8 +113,28 @@ You're ready to go!  To add a new file format:
     cause the file produced by your code to be saved to a temporary file in the
     current directory:
     
-        SAVE_FAILED_TEST=1 npm run -s test
-        mv error1.bin test/img-myformat/default.bin
+        # Prepare the location for the test files.
+        mkdir test/img-myformat/
+        touch test/img-myformat/default.bin   # Repeat for all needed files
+        
+        # Run the tests and save the output.
+        SAVE_FAILED_TEST=1 npm test
+        
+        # Check the failed output and if it's correct, overwrite the expected
+        # output with the test result.
+        mv test/img-myformat/default.bin.failed_test_output test/img-myformat/default.bin
+    
+    It is helpful however, to create these files first before implementing your
+    new format, as then you only need to keep running the tests and tweaking
+    your code until all the tests pass.
+    
+ 4. Create a file in `test/` for any extra tests your new format needs.
+    Typically all formats will at least have tests that confirm the optional
+    `identify()` function (if present) is correctly rejecting files, but you
+    can also add additional tests here if your format needs it.  See
+    [test-img-png.js](test/test-img-png.js) for an example.
+    
+ 5. Update the `README.md` with details of your new format and supported games.
 
 If your file format has any sort of compression or encryption, these algorithms
 should go into the `gamecomp` project instead.  This is to make it easier to
@@ -106,13 +145,28 @@ available to be used by any file format in this library.
 During development you can test your code like this:
 
     # Convert a sample image to .png and view it with `xv`, with debug messages on
-    $ ./bin/gamegfx --debug read -t img-myformat example.dat write -t img-png out.png && xv out.png
+    $ DEBUG='gamegraphics:*' ./bin/gamegfx.js read -t img-myformat example.dat write -t img-png out.png && xv out.png
 
     # Make sure the format is identified correctly or if not why not
-    $ ./bin/gamegfx --debug identify example.dat
+    $ DEBUG='gamegraphics:*' ./bin/gamegfx.js identify example.dat
 
-If you use `Debug.log()` rather than `console.log()` then these messages can be
-left in for future diagnosis as they will only appear when `--debug` is given.
+    # Run only unit tests for the new format, with debugging on
+    $ DEBUG='gamegraphics:*' npm test -- -g img-myformat
+
+If you use `debug()` rather than `console.log()` in your code then these
+messages can be left in for future diagnosis as they will only appear when the
+`DEBUG` environment variable is set correctly.
+
+### Development tips
+
+#### Images
+
+ * If your image has a palette, is it shared amongst other images or unique to
+   the format you are implementing?  If the palette is only used by one image,
+   it should be updated along with the pixel data when writing out the format.
+   If however the palette is shared amongst multiple images, it should be
+   implemented as a separate file format and not changed when an image is
+   written, to avoid a change to one image corrupting the colours in the others.
 
 ## Known issues
 
