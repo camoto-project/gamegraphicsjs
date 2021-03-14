@@ -160,11 +160,14 @@ for (const handler of gamegraphicsFormats) {
 
 				// Read the image
 				describe('read()', function() {
-					let image;
+					let frames, image;
 					before('should read correctly', function() {
-						image = handler.read(contentEncoded, options);
-						assert.notStrictEqual(image, undefined);
-						assert.notStrictEqual(image, null);
+						frames = handler.read(contentEncoded, options);
+						assert.notStrictEqual(frames, undefined);
+						assert.notStrictEqual(frames, null);
+						assert.notStrictEqual(frames.length, undefined);
+						assert.notStrictEqual(frames.length, 0);
+						image = frames[0];
 					});
 
 					it('should have the correct dimensions', function() {
@@ -215,7 +218,7 @@ for (const handler of gamegraphicsFormats) {
 
 				// Write the image
 				describe('write()', function() {
-					let image;
+					let frames, image;
 					before('generate standard image', function() {
 						image = new Image(
 							dims,
@@ -225,10 +228,11 @@ for (const handler of gamegraphicsFormats) {
 						);
 						assert.notStrictEqual(image, undefined);
 						assert.notStrictEqual(image, null);
+						frames = [image];
 					});
 
 					it('should write correctly', function() {
-						const { content: contentGenerated } = handler.write(image, options);
+						const { content: contentGenerated } = handler.write(frames, options);
 
 						TestUtil.contentEqual(contentEncoded, contentGenerated);
 					});

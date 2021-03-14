@@ -66,7 +66,7 @@ class Operations
 		if (params.format) {
 			handler = gamegraphicsFormats.find(h => h.metadata().id === params.format);
 			if (!handler) {
-				throw new OperationsError('Invalid format code: ' + params.format);
+				throw new OperationsError(`Invalid format code: ${params.format}.`);
 			}
 		}
 
@@ -97,7 +97,7 @@ class Operations
 					content[id] = fs.readFileSync(suppFilename);
 					content[id].filename = suppFilename;
 				} catch (e) {
-					throw new OperationsError(`open: unable to open supplementary file `
+					throw new OperationsError(`read: unable to open supplementary file `
 						+ `"${suppFilename}": ${e.message}`);
 				}
 			}
@@ -114,15 +114,22 @@ class Operations
 
 	read(params) {
 		({ image: this.image, origFormat: this.origFormat } = this.readFile(params));
+		this.selectedFrames = this.image;
 	}
 
 	readpal(params) {
-		const { image } = this.readFile(params);
-		if (image instanceof Image) {
-			this.image.palette = image.palette;
-		} else if (image instanceof Palette) {
-			this.image.palette = image;
+		const { image, origFormat } = this.readFile(params);
+		const palNew = image[0].palette;
+		if (!palNew) {
+			throw new OperatingError('readpal: This file does not supply a palette.');
 		}
+
+		let count = 0;
+		for (const i of this.selectedFrames) {
+			i.palette = palNew;
+			count++;
+		}
+		console.log(`Applied new "${origFormat}" palette to ${count} frame(s).`);
 	}
 
 	async write(params) {
@@ -139,7 +146,7 @@ class Operations
 		const md = handler.metadata();
 		const options = this.parseOptions(md, params.options);
 
-		const problems = handler.checkLimits(this.image, options);
+		const problems = handler.checkLimits(this.selectedFrames, options);
 		if (problems.length) {
 			console.log('There are problems preventing the requested changes from taking place:\n');
 			for (let i = 0; i < problems.length; i++) {
@@ -152,7 +159,7 @@ class Operations
 		console.warn('Writing to', params.target, 'as', params.format);
 		let outContent, warnings;
 		try {
-			({ content: outContent, warnings } = handler.write(this.image, options));
+			({ content: outContent, warnings } = handler.write(this.selectedFrames, options));
 		} catch (e) {
 			debug(e);
 			throw new OperationsError(`save: write() failed - ${e.message}`);
@@ -226,6 +233,76 @@ class Operations
 			}
 		}
 	}
+
+	info() {
+		if (this.image instanceof Image) {
+			console.log('Type: Single image');
+
+		} else if (this.image instanceof Array) {
+			// Run through the images and see if any have an animation delay set.
+			const imgWithDelay = this.image.find(i => i.postDelay !== undefined);
+			if (imgWithDelay) {
+				console.log('Type: Image list (animation)');
+			} else {
+				console.log('Type: Image list (tileset)');
+				console.log(`Number of top-level images: ${this.image.length}`);
+				const fnCount = i => {
+					let n = i.length;
+					for (const j of i) {
+						if (j instanceof Array) {
+							n += fnCount(j);
+						}
+					}
+					return n;
+				};
+				const totalImages = fnCount(this.image);
+				console.log(`Total number of images: ${totalImages}`);
+
+				const fnList = (img, prefix = '') => {
+					for (let i = 0; i < img.length; i++) {
+						const j = img[i];
+						if (j instanceof Array) {
+							fnList(j, `${prefix}${i}.`);
+						} else {
+							console.log(`${prefix}${i}: ${j.dims.x}x${j.dims.y}`);
+						}
+					}
+				};
+				fnList(this.image);
+			}
+
+		} else {
+			console.log('Type: Unknown');
+		}
+	}
+
+	select(params) {
+		if (!params.target) {
+			throw new OperationsError('select: missing image frame index (e.g. 1.2.3).');
+		}
+
+		function findIndex(sel, indices, count) {
+			//let sel = this.image;
+			let selProg = '';
+			let selGroup, selIndex;
+			for (const i of indices) {
+				selGroup = sel;
+				selIndex = parseInt(i, 10);
+				sel = sel[selIndex];
+				if (!sel) {
+					throw new OperationsError(`select: invalid index "${params.target}", `
+						+ `item "${selProg.slice(1)}" does not have a ".${i}".`);
+				}
+				selProg += `.${i}`;
+			}
+			return selGroup.slice(selIndex, selIndex + count);
+		}
+
+		const [ from, to ] = params.target.split(',');
+		const count = parseInt(to, 10) || 1;
+		this.selectedFrames = findIndex(this.image, from.split('.'), count);
+		console.log(`Selected ${this.selectedFrames.length} image(s)`);
+	}
 }
 
 Operations.names = {
@@ -237,6 +314,7 @@ Operations.names = {
 	identify: [
 		{ name: 'target', defaultOption: true },
 	],
+	info: [],
 	read: [
 		{ name: 'format', alias: 't' },
 		{ name: 'options', alias: 'o', lazyMultiple: true },
@@ -245,6 +323,9 @@ Operations.names = {
 	readpal: [
 		{ name: 'format', alias: 't' },
 		{ name: 'options', alias: 'o', lazyMultiple: true },
+		{ name: 'target', defaultOption: true },
+	],
+	select: [
 		{ name: 'target', defaultOption: true },
 	],
 	write: [
@@ -307,6 +388,9 @@ Commands:
   identify <file>
     Read local <file> and try to work out what image format it is in.
 
+  info
+    Show details of last image read by 'read'.
+
   read [-t format] [-o option1=value [-o option2=value [...]] <file>
     Read <file> from the local filesystem and load it into memory. See
     --formats for available formats and options.
@@ -314,6 +398,10 @@ Commands:
   readpal [-t format] [-o option1=value [-o option2=value [...]] <file>
     Use a different palette for the in-memory image, read from <file>.  To save
     a palette on its own, use the 'write' command and specify a palette format.
+
+  select <index>
+    Select an image from a list.  <index> is the number shown by 'info', e.g.
+    0 for the first frame, 6.2.4.1 for a nested frame.
 
   write -t <format> <file>
     Write the in-memory image to the local file <file>, in the given format.

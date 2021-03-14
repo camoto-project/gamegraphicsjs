@@ -86,15 +86,22 @@ export default class Image_PNG extends ImageHandler
 			palette = defaultPalette(png.depth);
 		}
 
-		return new Image(
-			{x: png.width, y: png.height},
-			png.data,
-			palette
-		);
+		return [
+			new Image(
+				{x: png.width, y: png.height},
+				png.data,
+				palette
+			),
+		];
 	}
 
-	static write(image)
+	static write(frames)
 	{
+		if (frames.length !== 1) {
+			throw new Error(`Can only write one frame to this format.`);
+		}
+		const image = frames[0];
+
 		let png = new PNG();
 		png.width = image.dims.x;
 		png.height = image.dims.y;
@@ -121,6 +128,7 @@ export default class Image_PNG extends ImageHandler
 			// image even if it doesn't use all 256 colours, so we'll leave it.
 			png.palette = image.palette.slice(0, 1 << png.depth);
 		} else {
+			debug('Using default palette');
 			png.palette = defaultPalette(png.depth);
 		}
 

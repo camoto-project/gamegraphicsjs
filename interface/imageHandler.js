@@ -128,37 +128,40 @@ export default class ImageHandler
 	 *   supplied image from being written in this format.  An empty array
 	 *   indicates no problems.
 	 */
-	static checkLimits(image)
+	static checkLimits(frames)
 	{
 		const { limits } = this.metadata();
 		let issues = [];
 
-		if (
-			(limits.maximumSize.x !== undefined)
-			&& (image.dims.x > limits.maximumSize.x)
-		) {
-			issues.push(`The image's width (${image.dims.x}) is larger than the `
-				+ `maximum of ${limits.maximumSize.x} that this format can handle.`);
-		}
+		for (let i = 0; i < frames.length; i++) {
+			const image = frames[i];
+			if (
+				(limits.maximumSize.x !== undefined)
+				&& (image.dims.x > limits.maximumSize.x)
+			) {
+				issues.push(`Frame #${i}'s width (${image.dims.x}) is larger than the `
+					+ `maximum of ${limits.maximumSize.x} that this format can handle.`);
+			}
 
-		if (
-			(limits.maximumSize.y !== undefined)
-			&& (image.dims.y > limits.maximumSize.y)
-		) {
-			issues.push(`The image's height (${image.dims.y}) is larger than the `
-				+ `maximum of ${limits.maximumSize.y} that this format can handle.`);
-		}
+			if (
+				(limits.maximumSize.y !== undefined)
+				&& (image.dims.y > limits.maximumSize.y)
+			) {
+				issues.push(`Frame #${i}'s height (${image.dims.y}) is larger than the `
+					+ `maximum of ${limits.maximumSize.y} that this format can handle.`);
+			}
 
-		// Make sure the image doesn't have too many colours.
-		const maxIndex = 1 << limits.depth;
-		for (let i = 0; i < image.pixels.length; i++) {
-			if (image.pixels[i] >= maxIndex) {
-				const x = i % image.dims.width;
-				const y = i / image.dims.width;
-				issues.push(`The image contains a pixel of colour index `
-					+ `${image.pixels[i]} at (${x},${y}), but this format only supports `
-					+ `images with colour numbers less than ${maxIndex}.`);
-				break;
+			// Make sure the image doesn't have too many colours.
+			const maxIndex = 1 << limits.depth;
+			for (let i = 0; i < image.pixels.length; i++) {
+				if (image.pixels[i] >= maxIndex) {
+					const x = i % image.dims.width;
+					const y = i / image.dims.width;
+					issues.push(`Frame #${i} contains a pixel of colour index `
+						+ `${image.pixels[i]} at (${x},${y}), but this format only supports `
+						+ `images with colour numbers less than ${maxIndex}.`);
+					break;
+				}
 			}
 		}
 
@@ -238,7 +241,7 @@ export default class ImageHandler
 	 *   supply additional attributes, such as image width and height for formats
 	 *   that don't store this in a file header.
 	 *
-	 * @return {Image} object containing the decoded image data.
+	 * @return {Array<Image>} list of one or more frames of an image.
 	 */
 	// eslint-disable-next-line no-unused-vars
 	static read(content, options) {
@@ -252,8 +255,10 @@ export default class ImageHandler
 	 *   successfully. If not, the behaviour is undefined and a corrupted file
 	 *   might be produced.
 	 *
-	 * @param {Image} image
-	 *   The image to encode.
+	 * @param {Array<Image>} frames
+	 *   One or more image to encode.  Most formats will only support an array
+	 *   with a single element, unless they are tilesets or animations which
+	 *   support more than one frame.
 	 *
 	 * @param {object} options
 	 *   Object with keys matching `this.metadata().options` if present.  Used to
@@ -269,7 +274,7 @@ export default class ImageHandler
 	 *   disk or offering for download to the user.
 	 */
 	// eslint-disable-next-line no-unused-vars
-	static write(image, options) {
+	static write(frames, options) {
 		throw new Error('Not implemented yet.');
 	}
 }

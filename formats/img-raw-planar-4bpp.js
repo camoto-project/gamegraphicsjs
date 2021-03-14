@@ -71,25 +71,33 @@ export default class Image_Raw_4bpp_Planar extends ImageHandler
 	}
 
 	static read(content, options = {}) {
-		const width = parseInt(options.width) ?? 320;
-		const height = parseInt(options.height) ?? 200;
+		const width = parseInt(options.width ?? 320);
+		const height = parseInt(options.height ?? 200);
+
 		if (width % 8) {
 			throw new Error(`Image width must be a multiple of 8 (limits.multipleSize ignored).`);
 		}
-		return new Image(
-			{x: width, y: height},
-			fromPlanar({
-				content: content.main,
-				planeCount: options.planeCount ?? 4,
-				planeWidth: width * height,
-				planeValues: [1, 2, 4, 8],
-				byteOrderMSB: true,
-			}),
-			paletteCGA16()
-		);
+		return [
+			new Image(
+				{x: width, y: height},
+				fromPlanar({
+					content: content.main,
+					planeCount: options.planeCount ?? 4,
+					planeWidth: width * height,
+					planeValues: [1, 2, 4, 8],
+					byteOrderMSB: true,
+				}),
+				paletteCGA16()
+			),
+		];
 	}
 
-	static write(image, options) {
+	static write(frames, options) {
+		if (frames.length !== 1) {
+			throw new Error(`Can only write one frame to this format.`);
+		}
+		const image = frames[0];
+
 		if (image.dims.x % 8) {
 			throw new Error(`Image width must be a multiple of 8 (limits.multipleSize ignored).`);
 		}

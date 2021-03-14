@@ -97,15 +97,22 @@ export default class Palette_VGA_6bit extends ImageHandler
 			}
 		}
 
-		return new Image(
-			{x: 0, y: 0},
-			null,
-			palette
-		);
+		return [
+			new Image(
+				{x: 0, y: 0},
+				null,
+				palette
+			),
+		];
 	}
 
-	static write(image)
+	static write(frames)
 	{
+		if (frames.length !== 1) {
+			throw new Error(`Can only write one frame to this format.`);
+		}
+		const image = frames[0];
+
 		const palette = image.palette;
 		if (!palette) {
 			throw new Error('Cannot write a palette file if the image has no palette!');

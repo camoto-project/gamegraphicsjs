@@ -67,13 +67,20 @@ export default class Image_Raw_8bpp_Linear extends ImageHandler
 	}
 
 	static read(content, options = {}) {
-		return new Image(
-			{x: options.width ?? 320, y: options.height ?? 200},
-			content.main
-		);
+		return [
+			new Image(
+				{x: options.width ?? 320, y: options.height ?? 200},
+				content.main
+			),
+		];
 	}
 
-	static write(image) {
+	static write(frames) {
+		if (frames.length !== 1) {
+			throw new Error(`Can only write one frame to this format.`);
+		}
+		const image = frames[0];
+
 		return {
 			content: {
 				main: image.pixels,

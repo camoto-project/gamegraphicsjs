@@ -38,12 +38,32 @@ export default class Image
 	 * @param {Palette} palette
 	 *   Colour palette to use.  Omit or specify null to use the default VGA
 	 *   palette.
+	 *
+	 * @param {Object} hotspot
+	 *   Pixel coordinate within the image that should appear at the location the
+	 *   image is drawn.  If the hotspot is (10,20) then drawing the image at
+	 *   (100,100) will cause the top-left of the image (0,0) to be drawn at
+	 *   (90,80), so that the hotspot is at the (100,100) coordinate.
+	 *
+	 * @param {Number} hotspot.x
+	 *   Horizontal hotspot point, in pixels.
+	 *
+	 * @param {Number} hotspot.y
+	 *   Vertical hotspot point, in pixels.
+	 *
+	 * @param {Number} postDelay
+	 *   Number of milliseconds to wait after drawing the image, if the image is
+	 *   a frame in an animation sequence.  Ignored if not part of an animation.
+	 *   Do not set (or set to `undefined`) unless this is an animation, as the
+	 *   presence of this value is used to distinguish between tilesets and
+	 *   animations.
 	 */
-	constructor(dims, content, palette, hotspot) {
+	constructor(dims, content, palette, hotspot, postDelay) {
 		this.dims = dims || {x: 0, y: 0};
 		this.pixels = content || new Uint8Array(this.dims.x * this.dims.y);
 		this.palette = palette || undefined;
 		this.hotspot = hotspot || {x: undefined, y: undefined};
+		this.postDelay = postDelay || undefined;
 	}
 
 	/**
