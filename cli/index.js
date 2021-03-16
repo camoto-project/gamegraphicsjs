@@ -121,7 +121,7 @@ class Operations
 		const { image, origFormat } = this.readFile(params);
 		const palNew = image[0].palette;
 		if (!palNew) {
-			throw new OperatingError('readpal: This file does not supply a palette.');
+			throw new OperationsError('readpal: This file does not supply a palette.');
 		}
 
 		let count = 0;
