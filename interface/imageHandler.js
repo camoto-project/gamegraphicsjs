@@ -113,6 +113,14 @@ export default class ImageHandler
 				 * role of transparent.
 				 */
 				transparentIndex: null,
+
+				/**
+				 * Maximum and minimum number of frames the format can read and write.
+				 * Defaults to 1 for normal images, but should be changed to 0 for
+				 * palette-only formats, and >1 for tilesets and animations.
+				 * max == undefined if there is no maximum.
+				 */
+				frameCount: { min: 1, max: 1 },
 			},
 			options: {},
 		};

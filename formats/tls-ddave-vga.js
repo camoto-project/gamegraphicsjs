@@ -26,9 +26,9 @@ import Debug from '../util/debug.js';
 const g_debug = Debug.extend(FORMAT_ID);
 
 import { RecordBuffer, RecordType } from '@camoto/record-io-buffer';
+import { pad_generic } from '@camoto/gamecomp';
 import ImageHandler from '../interface/imageHandler.js';
 import Image from '../interface/image.js';
-import { pad_generic } from '@camoto/gamecomp';
 
 const FIRST_TILE_WITH_DIMS = 53;
 
@@ -61,8 +61,23 @@ export default class Tileset_DDave extends ImageHandler
 		md.limits.maximumSize.y = undefined,
 		md.limits.depth = 8;
 		md.limits.hasPalette = false;
+		md.limits.frameCount.min = 1;
+		md.limits.frameCount.max = 158;
 
 		return md;
+	}
+
+	static checkLimits(frames) {
+		let issues = super.checkLimits(frames);
+
+		for (let i = 0; i < Math.min(53, frames.length); i++) {
+			if ((frames[i].dims.x !== 16) || (frames[i].dims.y !== 16)) {
+				issues.push(`The first 53 images can only be 16x16 pixels in size `
+					+ `(frame #${i} is ${frames[i].dims.x}x${frames[i].dims.y}).`);
+			}
+		}
+
+		return issues;
 	}
 
 	static identify(content) {
@@ -73,7 +88,13 @@ export default class Tileset_DDave extends ImageHandler
 			};
 		}
 
-		let buffer = new RecordBuffer(content);
+		// Remove the extra byte that's inserted every 65,535 bytes.
+		let unpaddedBuffer = pad_generic.reveal(content, {
+			pass: 0xFFFF,  // After this many bytes...
+			pad: 1,        // ...drop this many bytes.
+		});
+
+		let buffer = new RecordBuffer(unpaddedBuffer);
 		const count = recordTypes.header.count.read(buffer);
 		if (content.length < 4 + count * 4) {
 			return {
@@ -82,57 +103,32 @@ export default class Tileset_DDave extends ImageHandler
 			};
 		}
 
-		const bytesPerPixel = 0.5;
-		const fixedTileSize = 16 * 16 * bytesPerPixel;
-
-		let lastOffset = -1;
-		let part2offsets = [];
 		for (let i = 0; i < count; i++) {
 			const thisOffset = recordTypes.fatEntry.offset.read(buffer);
-			if (lastOffset === -1) continue;
-			if (thisOffset < lastOffset) {
+			if (thisOffset + 4 > buffer.length) {
 				return {
 					valid: false,
-					reason: `Negative tile length.`,
+					reason: `Tile ${i} starts at EOF.`,
 				};
 			}
 
-			// Keep track of the offsets for all the tiles that have a header, so
-			// we can check the header next.
+			let tileSize;
 			if (i >= FIRST_TILE_WITH_DIMS) {
-				part2offsets.push({
-					offset: lastOffset,
-					size: lastOffset - thisOffset,
-				});
+				const origPos = buffer.getPos();
+				buffer.seekAbs(thisOffset);
+				const tileHeader = buffer.readRecord(recordTypes.tileHeader);
+				buffer.seekAbs(origPos);
+				tileSize = 4 + tileHeader.width * tileHeader.height;
+			} else {
+				tileSize = 16 * 16;
 			}
-			lastOffset = thisOffset;
-		}
-
-		// Remove the extra byte that's inserted every 65,535 bytes.
-		let unpaddedBuffer = buffer;
-
-		if (count > FIRST_TILE_WITH_DIMS) {
-			part2offsets.push({
-				offset: lastOffset,
-				size: lastOffset - unpaddedBuffer.length,
-			});
-		}
-
-		part2offsets.forEach(o => {
-			buffer.seek(o.offset);
-			const tileHeader = unpaddedBuffer.readRecord(recordTypes.tileHeader);
-
-			// Round the width up to the next multiple of 8
-			const width8 = tileHeader.width + 8 - (tileHeader.width % 8);
-
-			const dataSize = width8 * tileHeader.height * bytesPerPixel;
-			if (dataSize != o.size) {
+			if (thisOffset + tileSize > buffer.length) {
 				return {
 					valid: false,
-					reason: `Image dimensions in header don't match data length.`,
+					reason: `Tile ${i} runs past EOF.`,
 				};
 			}
-		});
+		}
 
 		return {
 			valid: true,
@@ -140,7 +136,7 @@ export default class Tileset_DDave extends ImageHandler
 		};
 	}
 
-	static read(content, options = {}) {
+	static read(content) {
 		const debug = g_debug.extend('read');
 
 		// Not using cmp_rle_id as that is considered part of the .exe and by the
@@ -193,9 +189,57 @@ export default class Tileset_DDave extends ImageHandler
 		return images;
 	}
 
-	static write(image, options = {}) {
+	static write(frames) {
 		const debug = g_debug.extend('write');
 
-		throw new Error('Not implemented yet.');
+		// Calculate the size up front so we don't have to keep reallocating the
+		// buffer, improving performance.
+		const offEndFAT = 4 /* header */ + 4 * frames.length /* FAT */;
+		const finalSize = frames.reduce(
+			(a, b) => a + (b.dims.x * b.dims.y),
+			offEndFAT,
+		);
+		let buffer = new RecordBuffer(finalSize);
+
+		// Write the file header.
+		buffer.writeRecord(recordTypes.header, {
+			count: frames.length,
+		});
+
+		// Write the FAT.
+		let nextOffset = offEndFAT;
+		for (let i = 0; i < frames.length; i++) {
+			buffer.writeRecord(recordTypes.fatEntry, {
+				offset: nextOffset,
+			});
+			nextOffset += frames[i].dims.x * frames[i].dims.y;
+			if (i >= FIRST_TILE_WITH_DIMS) {
+				nextOffset += 4;
+			}
+		}
+
+		// Write the pixel data.
+		for (let i = 0; i < frames.length; i++) {
+			if (i >= FIRST_TILE_WITH_DIMS) {
+				buffer.writeRecord(recordTypes.tileHeader, {
+					width: frames[i].dims.x,
+					height: frames[i].dims.y,
+				});
+			}
+			buffer.put(frames[i].pixels);
+		}
+
+		// Add the extra padding byte inserted every 65,535 bytes.
+		let bufPadded = pad_generic.obscure(buffer.getU8(), {
+			pass: 0xFFFF,  // After this many bytes...
+			pad: 1,        // ...drop this many bytes.
+		});
+
+		return {
+			content: {
+				main: bufPadded,
+			},
+			warnings: [],
+		};
 	}
-};
+}

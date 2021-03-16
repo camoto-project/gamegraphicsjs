@@ -169,6 +169,25 @@ messages can be left in for future diagnosis as they will only appear when the
    implemented as a separate file format and not changed when an image is
    written, to avoid a change to one image corrupting the colours in the others.
 
+ * Tilesets should be returned as an array of individual images.  This allows
+   map editors to draw the tiles singly.  For those games where the tilesets
+   are more easily edited as a single large image, gameinfo.js can be used to
+   combine all the tiles into a single image and split them out again when
+   changing the tileset.  See `game-ddave` for an example of how this is done.
+
+#### File formats
+
+ * `tls-ddave-vga` is stored inside the game's .exe files, so
+   [gamearchive.js](https://github.com/Malvineous/gamearchivejs) is used to
+   extract that.  It is compressed, but the EGA version of the graphics is
+   stored outside the .exe and not compressed, so it was decided that
+   compression is unique to the .exe and not part of the tileset format.  Thus
+   gamearchive.js takes care of the decompression for CGA and VGA graphics,
+   while the EGA graphics are read as-is.  gamegraphics.js still has to decode
+   the data as due to a bug in the way the game reads the files, it skips one
+   byte every 64 kB so a gamecomp.js filter is used to add and remove these
+   extra bytes.
+
 ## Known issues
 
 pngjs cannot write indexed .png images, only 24-bit RGBA.  This means the

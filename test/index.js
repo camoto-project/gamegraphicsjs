@@ -28,6 +28,8 @@ import {
 
 // Skip these tests until the format handlers are improved.
 const skipTests = [
+	// These formats can't be tested easily with standard tests.
+	'tls-ddave-vga', // first tiles are fixed at 16x16, rest are variable
 ];
 
 // Override the default colours so we can actually see them

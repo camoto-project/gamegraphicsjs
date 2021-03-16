@@ -18,6 +18,7 @@
  */
 
 import assert from 'assert';
+import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -76,10 +77,24 @@ export default class TestUtil {
 		return u8;
 	}
 
+	// Load files from within a format-specific folder in the test directory,
+	// defaulting to a .bin extension but falling back to any other extension.
 	loadContent(handler, ids) {
 		let content = {};
 		for (const name of ids) {
-			const mainFilename = path.join(__dirname, this.idHandler, name + '.bin');
+			// Read <name>.bin if present, otherwise look for <name>.*
+			const pathFiles = path.resolve(__dirname, this.idHandler);
+			const files = fs.readdirSync(pathFiles);
+			let targetName;
+			if (files.includes(name + '.bin')) {
+				targetName = name + '.bin';
+			} else {
+				const target = files.filter(f => f.startsWith(name + '.'));
+				assert.ok(target.length === 1, `Expected only one file: ${this.idHandler}/${name}.*`);
+				targetName = target[0];
+			}
+
+			const mainFilename = path.join(__dirname, this.idHandler, targetName);
 			let input = {
 				main: this.loadData(mainFilename),
 			};
@@ -92,6 +107,39 @@ export default class TestUtil {
 			}
 
 			content[name] = input;
+		}
+
+		return content;
+	}
+
+	// Load files from within a format-specific folder in the test directory,
+	// using exactly the filename given.
+	loadDirect(handler, ids) {
+		let content = {};
+		for (const targetName of ids) {
+			let input = {};
+
+			const mainFilename = path.join(__dirname, this.idHandler, targetName);
+			try {
+				input.main = this.loadData(mainFilename);
+			} catch (e) {
+				throw new Error(`Unable to open ${mainFilename}.`);
+			}
+
+			let lastSuppFilename;
+			try {
+				const suppList = handler && handler.supps(mainFilename, input.main);
+				if (suppList) {
+					for (const [id, suppFilename] of Object.entries(suppList)) {
+						lastSuppFilename = suppFilename;
+						input[id] = this.loadData(suppFilename); // already includes full path
+					}
+				}
+			} catch (e) {
+				throw new Error(`Unable to open supp file ${lastSuppFilename}.`);
+			}
+
+			content[targetName] = input;
 		}
 
 		return content;
@@ -127,5 +175,12 @@ export default class TestUtil {
 
 	static u8FromString(s) {
 		return Uint8Array.from(s.split(''), s => s.charCodeAt(0));
+	}
+
+	static hash(content) {
+		return crypto
+			.createHash('sha1')
+			.update(content)
+			.digest('base64');
 	}
 }
