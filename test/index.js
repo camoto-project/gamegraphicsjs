@@ -297,10 +297,10 @@ for (const handler of gamegraphicsFormats) {
 			// Run a test at this resolution if it's between, but not exactly, the
 			// maximum or the minimum (since we've already run max+min tests above).
 			if (
-				(md.limits.minimumSize.x < testDims.x)
-				&& (md.limits.minimumSize.y < testDims.y)
-				&& (maxDims.x > testDims.x)
-				&& (maxDims.y > testDims.y)
+				(md.limits.minimumSize.x <= testDims.x)
+				&& (md.limits.minimumSize.y <= testDims.y)
+				&& (maxDims.x >= testDims.x)
+				&& (maxDims.y >= testDims.y)
 				&& (md.limits.multipleSize.x && (testDims.x % md.limits.multipleSize.x === 0))
 				&& (md.limits.multipleSize.y && (testDims.y % md.limits.multipleSize.y === 0))
 			) {
