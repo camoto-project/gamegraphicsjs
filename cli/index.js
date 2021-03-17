@@ -306,11 +306,6 @@ class Operations
 }
 
 Operations.names = {
-	extract: [
-		{ name: 'name', alias: 'n' },
-		{ name: 'raw', alias: 'r', type: Boolean },
-		{ name: 'target', defaultOption: true },
-	],
 	identify: [
 		{ name: 'target', defaultOption: true },
 	],
@@ -421,7 +416,13 @@ Examples:
 	while (cmd.name) {
 		const def = Operations.names[cmd.name];
 		if (def) {
-			const runOptions = commandLineArgs(def, { argv, stopAtFirstUnknown: true });
+			let runOptions;
+			try {
+				runOptions = commandLineArgs(def, { argv, stopAtFirstUnknown: true });
+			} catch (e) {
+				console.error(`Error processing command line: ${e.message}`);
+				process.exit(1);
+			}
 			argv = runOptions._unknown || [];
 			try {
 				await proc[cmd.name](runOptions);
