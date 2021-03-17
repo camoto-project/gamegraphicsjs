@@ -31,6 +31,7 @@ import ImageHandler from '../interface/imageHandler.js';
 import Image from '../interface/image.js';
 
 const FIRST_TILE_WITH_DIMS = 53;
+const DDAVE_BLOCK_SIZE = 0xFF00;
 
 const recordTypes = {
 	header: {
@@ -88,10 +89,10 @@ export default class Tileset_DDave extends ImageHandler
 			};
 		}
 
-		// Remove the extra byte that's inserted every 65,535 bytes.
+		// Then remove the extra padding byte inserted every RLE block.
 		let unpaddedBuffer = pad_generic.reveal(content, {
-			pass: 0xFFFF,  // After this many bytes...
-			pad: 1,        // ...drop this many bytes.
+			pass: DDAVE_BLOCK_SIZE,  // After this many bytes...
+			pad: 1,                  // ...drop this many bytes.
 		});
 
 		let buffer = new RecordBuffer(unpaddedBuffer);
@@ -143,10 +144,10 @@ export default class Tileset_DDave extends ImageHandler
 		// time we get here RLE compression has been removed, matching the way the
 		// external egadave.dav works.
 
-		// Then remove the extra padding byte inserted every 65,535 bytes.
+		// Then remove the extra padding byte inserted every RLE block.
 		let unpaddedBuffer = pad_generic.reveal(content.main, {
-			pass: 0xFFFF,  // After this many bytes...
-			pad: 1,        // ...drop this many bytes.
+			pass: DDAVE_BLOCK_SIZE,  // After this many bytes...
+			pad: 1,                  // ...drop this many bytes.
 		});
 
 		let buffer = new RecordBuffer(unpaddedBuffer);
@@ -229,10 +230,10 @@ export default class Tileset_DDave extends ImageHandler
 			buffer.put(frames[i].pixels);
 		}
 
-		// Add the extra padding byte inserted every 65,535 bytes.
+		// Add the extra padding byte inserted every RLE block.
 		let bufPadded = pad_generic.obscure(buffer.getU8(), {
-			pass: 0xFFFF,  // After this many bytes...
-			pad: 1,        // ...drop this many bytes.
+			pass: DDAVE_BLOCK_SIZE,  // After this many bytes...
+			pad: 1,                  // ...add this many bytes.
 		});
 
 		return {
