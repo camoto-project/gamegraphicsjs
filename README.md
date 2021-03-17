@@ -24,7 +24,7 @@ read and write the image.
 | Game                      | Types                    | Code                  |
 |---------------------------|--------------------------|-----------------------|
 | Cosmo's Cosmic Adventures | Full-screen images       | img-raw-planar-4bpp   |
-| Dangerous Dave (read only)| Map tileset              | tls-ddave-vga         |
+| Dangerous Dave            | Map tileset              | tls-ddave-vga         |
 
 ## Installation as an end-user
 
