@@ -44,6 +44,7 @@
   "files": [
     "bin/",
     "cli/*.js",
+    "interface/",
     "formats/",
     "util/",
     "index.js"
