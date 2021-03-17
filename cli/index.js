@@ -24,7 +24,6 @@ import fs from 'fs';
 import commandLineArgs from 'command-line-args';
 import {
 	Image,
-	Palette,
 	all as gamegraphicsFormats,
 	findHandler as gamegraphicsFindHandler,
 } from '../index.js';
