@@ -56,6 +56,11 @@ export function imageFromTileset(tiles, width)
  */
 export function tilesetFromImage(frame, tileDimensions, tileCount, bg = 0)
 {
+	if (!(frame instanceof Image)) {
+		throw new Error(`Bad parameter: tilesetFromImage() expects Image instance `
+			+ `as first parameter, got ${typeof frame}.`);
+	}
+
 	let tiles = [];
 	for (let ty = 0; ty < frame.dims.y; ty += tileDimensions.y) {
 		for (let tx = 0; tx < frame.dims.x; tx += tileDimensions.x) {
