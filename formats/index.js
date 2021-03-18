@@ -24,4 +24,4 @@ export { default as img_raw_planar_4bpp } from './img-raw-planar-4bpp.js';
 export { default as pal_vga_6bit } from './pal-vga-6bit.js';
 export { default as pal_vga_8bit } from './pal-vga-8bit.js';
 
-export { default as tls_ddave_vga } from './tls-ddave-vga.js';
+export * from './tls-ddave.js';

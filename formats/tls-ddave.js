@@ -20,18 +20,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const FORMAT_ID = 'tls-ddave-vga';
+const FORMAT_ID = 'tls-ddave';
 
 import Debug from '../util/debug.js';
 const g_debug = Debug.extend(FORMAT_ID);
 
 import { RecordBuffer, RecordType } from '@camoto/record-io-buffer';
-import { pad_generic } from '@camoto/gamecomp';
 import ImageHandler from '../interface/imageHandler.js';
 import Image from '../interface/image.js';
+import { fromPlanar, toPlanar } from '../util/image-planar.js';
+import { fromPacked, toPacked } from '../util/image-linear_packed.js';
+import { paletteCGA4, CGAPaletteType } from '../util/palette-default.js';
 
 const FIRST_TILE_WITH_DIMS = 53;
-const DDAVE_BLOCK_SIZE = 0xFF00;
 
 const recordTypes = {
 	header: {
@@ -46,15 +47,15 @@ const recordTypes = {
 	},
 };
 
-export default class Tileset_DDave extends ImageHandler
+function roundMultiple(value, multiple)
+{
+	return value + ((multiple - (value % multiple)) % multiple);
+}
+
+class Tileset_DDave_Common extends ImageHandler
 {
 	static metadata() {
-		let md = {
-			...super.metadata(),
-			id: FORMAT_ID,
-			title: 'Dangerous Dave Tileset',
-			options: {},
-		};
+		let md = super.metadata();
 
 		md.limits.minimumSize.x = 0;
 		md.limits.minimumSize.y = 0;
@@ -89,13 +90,7 @@ export default class Tileset_DDave extends ImageHandler
 			};
 		}
 
-		// Then remove the extra padding byte inserted every RLE block.
-		let unpaddedBuffer = pad_generic.reveal(content, {
-			pass: DDAVE_BLOCK_SIZE,  // After this many bytes...
-			pad: 1,                  // ...drop this many bytes.
-		});
-
-		let buffer = new RecordBuffer(unpaddedBuffer);
+		let buffer = new RecordBuffer(content);
 		const count = recordTypes.header.count.read(buffer);
 		if (content.length < 4 + count * 4) {
 			return {
@@ -119,9 +114,9 @@ export default class Tileset_DDave extends ImageHandler
 				buffer.seekAbs(thisOffset);
 				const tileHeader = buffer.readRecord(recordTypes.tileHeader);
 				buffer.seekAbs(origPos);
-				tileSize = 4 + tileHeader.width * tileHeader.height;
+				tileSize = 4 + roundMultiple(tileHeader.width, 8) * tileHeader.height * this.imageBitDepth() / 8;
 			} else {
-				tileSize = 16 * 16;
+				tileSize = 16 * 16 * this.imageBitDepth() / 8;
 			}
 			if (thisOffset + tileSize > buffer.length) {
 				return {
@@ -144,13 +139,7 @@ export default class Tileset_DDave extends ImageHandler
 		// time we get here RLE compression has been removed, matching the way the
 		// external egadave.dav works.
 
-		// Then remove the extra padding byte inserted every RLE block.
-		let unpaddedBuffer = pad_generic.reveal(content.main, {
-			pass: DDAVE_BLOCK_SIZE,  // After this many bytes...
-			pad: 1,                  // ...drop this many bytes.
-		});
-
-		let buffer = new RecordBuffer(unpaddedBuffer);
+		let buffer = new RecordBuffer(content.main);
 		const header = buffer.readRecord(recordTypes.header);
 
 		let lastOffset = -1, firstOffset = -1;
@@ -179,9 +168,9 @@ export default class Tileset_DDave extends ImageHandler
 				dims = {x: tileHeader.width, y: tileHeader.height};
 				lenHeader = 4;
 			}
-			let img = new Image(
+			let img = this.createImage(
 				dims,
-				buffer.getU8(thisOffset + lenHeader, sizes[i] - lenHeader),
+				buffer.getU8(thisOffset + lenHeader, sizes[i] - lenHeader)
 			);
 			images.push(img);
 			thisOffset += sizes[i];
@@ -207,40 +196,144 @@ export default class Tileset_DDave extends ImageHandler
 			count: frames.length,
 		});
 
-		// Write the FAT.
-		let nextOffset = offEndFAT;
-		for (let i = 0; i < frames.length; i++) {
-			buffer.writeRecord(recordTypes.fatEntry, {
-				offset: nextOffset,
-			});
-			nextOffset += frames[i].dims.x * frames[i].dims.y;
-			if (i >= FIRST_TILE_WITH_DIMS) {
-				nextOffset += 4;
-			}
-		}
-
 		// Write the pixel data.
+		let bufferMain = new RecordBuffer(finalSize);
 		for (let i = 0; i < frames.length; i++) {
+			// Write the next FAT entry.
+			buffer.writeRecord(recordTypes.fatEntry, {
+				offset: offEndFAT + bufferMain.getPos(),
+			});
 			if (i >= FIRST_TILE_WITH_DIMS) {
-				buffer.writeRecord(recordTypes.tileHeader, {
+				bufferMain.writeRecord(recordTypes.tileHeader, {
 					width: frames[i].dims.x,
 					height: frames[i].dims.y,
 				});
 			}
-			buffer.put(frames[i].pixels);
+			const pixelData = this.getPixelData(frames[i].dims, frames[i].pixels);
+			bufferMain.put(pixelData);
 		}
 
-		// Add the extra padding byte inserted every RLE block.
-		let bufPadded = pad_generic.obscure(buffer.getU8(), {
-			pass: DDAVE_BLOCK_SIZE,  // After this many bytes...
-			pad: 1,                  // ...add this many bytes.
-		});
+		if (buffer.getPos() !== offEndFAT) {
+			throw new Error('BUG: Miscalculated FAT length.');
+		}
+
+		// Write out all the pixel data after the FAT.
+		buffer.put(bufferMain);
 
 		return {
 			content: {
-				main: bufPadded,
+				main: buffer.getU8(),
 			},
 			warnings: [],
 		};
+	}
+}
+
+export class tls_ddave_vga extends Tileset_DDave_Common
+{
+	static metadata() {
+		return {
+			...super.metadata(),
+			id: FORMAT_ID + '-vga',
+			title: 'Dangerous Dave VGA tileset',
+			options: {},
+		};
+	}
+
+	static imageBitDepth() {
+		return 8;
+	}
+
+	static createImage(dims, pixelData) {
+		return new Image(
+			dims,
+			pixelData,
+		);
+	}
+
+	static getPixelData(dims, pixels) {
+		// Pixel data is already in 8bpp format.
+		return pixels;
+	}
+}
+
+export class tls_ddave_ega extends Tileset_DDave_Common
+{
+	static metadata() {
+		return {
+			...super.metadata(),
+			id: FORMAT_ID + '-ega',
+			title: 'Dangerous Dave EGA tileset',
+			options: {},
+		};
+	}
+
+	static imageBitDepth() {
+		return 4;
+	}
+
+	static createImage(dims, pixelData) {
+		return new Image(
+			dims,
+			fromPlanar({
+				content: pixelData,
+				planeCount: 4,
+				planeWidth: 8,
+				lineWidth: dims.x,
+				planeValues: [8, 4, 2, 1],
+				byteOrderMSB: true,
+			}),
+		);
+	}
+
+	static getPixelData(dims, pixels) {
+		return toPlanar({
+			content: pixels,
+			planeCount: 4,
+			planeWidth: 8,
+			lineWidth: dims.x,
+			planeValues: [8, 4, 2, 1],
+			byteOrderMSB: true,
+		});
+	}
+}
+
+export class tls_ddave_cga extends Tileset_DDave_Common
+{
+	static metadata() {
+		return {
+			...super.metadata(),
+			id: FORMAT_ID + '-cga',
+			title: 'Dangerous Dave CGA tileset',
+			options: {},
+		};
+	}
+
+	static imageBitDepth() {
+		return 2;
+	}
+
+	static createImage(dims, pixelData) {
+		return new Image(
+			dims,
+			fromPacked({
+				content: pixelData,
+				bitDepth: this.imageBitDepth(),
+				dims,
+				widthBits: Math.ceil(dims.x * this.imageBitDepth() / 8) * 8,
+				byteOrderMSB: true,
+			}),
+			paletteCGA4(CGAPaletteType.CyanMagentaBright, 0),
+		);
+	}
+
+	static getPixelData(dims, pixels) {
+		return toPacked({
+			content: pixels,
+			bitDepth: this.imageBitDepth(),
+			dims,
+			widthBits: Math.ceil(dims.x * this.imageBitDepth() / 8) * 8,
+			byteOrderMSB: true,
+		});
 	}
 }

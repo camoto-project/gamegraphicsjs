@@ -29,6 +29,8 @@ import {
 // Skip these tests until the format handlers are improved.
 const skipTests = [
 	// These formats can't be tested easily with standard tests.
+	'tls-ddave-cga', // first tiles are fixed at 16x16, rest are variable
+	'tls-ddave-ega', // first tiles are fixed at 16x16, rest are variable
 	'tls-ddave-vga', // first tiles are fixed at 16x16, rest are variable
 ];
 
