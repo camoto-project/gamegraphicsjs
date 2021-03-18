@@ -20,14 +20,15 @@
 import TestUtil from './util.js';
 import { fromPlanar, toPlanar } from '../util/image-planar.js';
 
-function runTest(msg, { planar, linear, planeCount, planeWidth, isMSB, planeValues }) {
+function runTest(msg, { planar, linear, planeCount, planeWidth, lineWidth, isMSB, planeValues }) {
 	describe(msg, function() {
 
 		it('fromPlanar()', function() {
 			const actual = fromPlanar({
-				content: planar,
+				content: Uint8Array.from(planar),
 				planeCount,
 				planeWidth,
+				lineWidth,
 				byteOrderMSB: isMSB,
 				planeValues,
 			});
@@ -36,9 +37,10 @@ function runTest(msg, { planar, linear, planeCount, planeWidth, isMSB, planeValu
 
 		it('toPlanar()', function() {
 			const actual = toPlanar({
-				content: linear,
+				content: Uint8Array.from(linear),
 				planeCount,
 				planeWidth,
+				lineWidth,
 				byteOrderMSB: isMSB,
 				planeValues,
 			});
@@ -60,6 +62,7 @@ describe(`Extra tests for util/image-planar`, function() {
 			],
 			planeCount: 4,
 			planeWidth: 8,
+			lineWidth: 8,
 			isMSB: true,
 			planeValues: [1, 2, 4, 8],
 		}
@@ -78,6 +81,7 @@ describe(`Extra tests for util/image-planar`, function() {
 			],
 			planeCount: 4,
 			planeWidth: 8,
+			lineWidth: 8,
 			isMSB: true,
 			planeValues: [1, 2, 4, 8],
 		}
@@ -98,6 +102,7 @@ describe(`Extra tests for util/image-planar`, function() {
 			],
 			planeCount: 4,
 			planeWidth: 16,
+			lineWidth: 16,
 			isMSB: true,
 			planeValues: [1, 2, 4, 8],
 		}
@@ -124,6 +129,7 @@ describe(`Extra tests for util/image-planar`, function() {
 			],
 			planeCount: 4,
 			planeWidth: 16,
+			lineWidth: 16,
 			isMSB: true,
 			planeValues: [1, 2, 4, 8],
 		}
@@ -140,6 +146,7 @@ describe(`Extra tests for util/image-planar`, function() {
 			],
 			planeCount: 5,
 			planeWidth: 8,
+			lineWidth: 8,
 			isMSB: true,
 			planeValues: [1, 2, 4, 8, 16],
 		}
@@ -158,6 +165,7 @@ describe(`Extra tests for util/image-planar`, function() {
 			],
 			planeCount: 5,
 			planeWidth: 8,
+			lineWidth: 8,
 			isMSB: true,
 			planeValues: [1, 2, 4, 8, 16],
 		}
@@ -179,6 +187,7 @@ describe(`Extra tests for util/image-planar`, function() {
 			],
 			planeCount: 5,
 			planeWidth: 16,
+			lineWidth: 16,
 			isMSB: true,
 			planeValues: [1, 2, 4, 8, 16],
 		}
@@ -207,6 +216,7 @@ describe(`Extra tests for util/image-planar`, function() {
 			],
 			planeCount: 5,
 			planeWidth: 16,
+			lineWidth: 16,
 			isMSB: true,
 			planeValues: [1, 2, 4, 8, 16],
 		}
@@ -223,6 +233,7 @@ describe(`Extra tests for util/image-planar`, function() {
 			],
 			planeCount: 6,
 			planeWidth: 8,
+			lineWidth: 8,
 			isMSB: true,
 			planeValues: [1, 2, 4, 8, 16, 32],
 		}
@@ -241,6 +252,7 @@ describe(`Extra tests for util/image-planar`, function() {
 			],
 			planeCount: 6,
 			planeWidth: 8,
+			lineWidth: 8,
 			isMSB: true,
 			planeValues: [1, 2, 4, 8, 16, 32],
 		}
@@ -257,6 +269,7 @@ describe(`Extra tests for util/image-planar`, function() {
 			],
 			planeCount: 4,
 			planeWidth: 8,
+			lineWidth: 8,
 			isMSB: true,
 			planeValues: [1, 2, 4, 8],
 		}
@@ -273,6 +286,7 @@ describe(`Extra tests for util/image-planar`, function() {
 			],
 			planeCount: 4,
 			planeWidth: 8,
+			lineWidth: 8,
 			isMSB: false,
 			planeValues: [1, 2, 4, 8],
 		}
@@ -291,6 +305,7 @@ describe(`Extra tests for util/image-planar`, function() {
 			],
 			planeCount: 4,
 			planeWidth: 8,
+			lineWidth: 8,
 			isMSB: true,
 			planeValues: [1, 2, 4, 8],
 		}
@@ -309,6 +324,7 @@ describe(`Extra tests for util/image-planar`, function() {
 			],
 			planeCount: 4,
 			planeWidth: 8,
+			lineWidth: 8,
 			isMSB: false,
 			planeValues: [1, 2, 4, 8],
 		}
@@ -329,6 +345,7 @@ describe(`Extra tests for util/image-planar`, function() {
 			],
 			planeCount: 4,
 			planeWidth: 16,
+			lineWidth: 16,
 			isMSB: true,
 			planeValues: [1, 2, 4, 8],
 		}
@@ -349,6 +366,7 @@ describe(`Extra tests for util/image-planar`, function() {
 			],
 			planeCount: 4,
 			planeWidth: 16,
+			lineWidth: 16,
 			isMSB: false,
 			planeValues: [1, 2, 4, 8],
 		}
@@ -365,6 +383,7 @@ describe(`Extra tests for util/image-planar`, function() {
 			],
 			planeCount: 4,
 			planeWidth: 8,
+			lineWidth: 8,
 			isMSB: true,
 			planeValues: [1, 2, 4, 8],
 		}
@@ -381,8 +400,94 @@ describe(`Extra tests for util/image-planar`, function() {
 			],
 			planeCount: 4,
 			planeWidth: 8,
+			lineWidth: 8,
 			isMSB: true,
 			planeValues: [8, 4, 2, 1],
+		}
+	);
+
+	runTest(
+		`should handle image widths not a multiple of 8 (7x1)`,
+		{
+			planar: [
+				0xFE,
+				0x70,
+				0x3E,
+				0x18,
+			],
+			linear: [
+				0x01, 0x03, 0x07, 0x0F, 0x0D, 0x05, 0x05,
+			],
+			planeCount: 4,
+			planeWidth: 8,
+			lineWidth: 7,
+			isMSB: true,
+			planeValues: [1, 2, 4, 8],
+		}
+	);
+
+	runTest(
+		`should handle image widths not a multiple of 8 (7x2)`,
+		{
+			planar: [
+				0xFE, 0x70, 0x3E, 0x18,
+				0x54, 0xAA, 0xFE, 0x00,
+			],
+			linear: [
+				0x01, 0x03, 0x07, 0x0F, 0x0D, 0x05, 0x05,
+				0x06, 0x05, 0x06, 0x05, 0x06, 0x05, 0x06,
+			],
+			planeCount: 4,
+			planeWidth: 8,
+			lineWidth: 7,
+			isMSB: true,
+			planeValues: [1, 2, 4, 8],
+		}
+	);
+
+	runTest(
+		`should handle image widths not a multiple of 8 (9x1)`,
+		{
+			planar: [
+				0xFE, 0x00,
+				0x71, 0x00,
+				0x3E, 0x80,
+				0x18, 0x00,
+			],
+			linear: [
+				0x01, 0x03, 0x07, 0x0F, 0x0D, 0x05, 0x05, 0x02, 0x04
+			],
+			planeCount: 4,
+			planeWidth: 16,
+			lineWidth: 9,
+			isMSB: true,
+			planeValues: [1, 2, 4, 8],
+		}
+	);
+
+	runTest(
+		`should handle image widths not a multiple of 8 (9x2)`,
+		{
+			planar: [
+				0xFE, 0x00,
+				0x71, 0x00,
+				0x3E, 0x80,
+				0x18, 0x00,
+
+				0x55, 0x00,
+				0xAA, 0x80,
+				0xFF, 0x80,
+				0x00, 0x00,
+			],
+			linear: [
+				0x01, 0x03, 0x07, 0x0F, 0x0D, 0x05, 0x05, 0x02, 0x04,
+				0x06, 0x05, 0x06, 0x05, 0x06, 0x05, 0x06, 0x05, 0x06,
+			],
+			planeCount: 4,
+			planeWidth: 16,
+			lineWidth: 9,
+			isMSB: true,
+			planeValues: [1, 2, 4, 8],
 		}
 	);
 

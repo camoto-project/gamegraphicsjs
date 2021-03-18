@@ -20,6 +20,8 @@
 import Debug from '../util/debug.js';
 const debug = Debug.extend('image-planar');
 
+import { pad_generic } from '@camoto/gamecomp';
+
 /**
  * Convert packed planar pixel data to linear.
  *
@@ -44,7 +46,7 @@ const debug = Debug.extend('image-planar');
  *
  * @return {Uint8Array} 8bpp linear pixel data.
  */
-export function fromPlanar({ content, planeCount, planeWidth, planeValues, byteOrderMSB })
+export function fromPlanar({ content, planeCount, planeWidth, lineWidth, planeValues, byteOrderMSB })
 {
 	// Shortcut for 0x0 image.
 	if (content.length === 0) {
@@ -69,6 +71,16 @@ export function fromPlanar({ content, planeCount, planeWidth, planeValues, byteO
 		if (plane === planeCount - 1) outpos += planeWidth;
 	}
 
+	// If the image width isn't a multiple of 8, remove the extra pixels that were
+	// added to ensure each planar row ended on a byte boundary.
+	const padding = (8 - (lineWidth % 8)) % 8;
+	if (padding) {
+		out = pad_generic.reveal(out, {
+			pass: lineWidth,
+			pad: padding,
+		});
+	}
+
 	return out;
 }
 
@@ -81,11 +93,23 @@ export function fromPlanar({ content, planeCount, planeWidth, planeValues, byteO
  *
  * @return {Uint8Array} 1/2/4/8bpp planar pixel data.
  */
-export function toPlanar({ content, planeCount, planeWidth, planeValues, byteOrderMSB })
+export function toPlanar({ content, planeCount, planeWidth, lineWidth, planeValues, byteOrderMSB })
 {
 	// Shortcut for 0x0 image.
 	if (content.length === 0) {
 		return new Uint8Array(0);
+	}
+
+	// If the image width isn't a multiple of 8, pad it so that it is.  This
+	// ensures each row ends on a byte boundary.
+	const padding = (8 - (lineWidth % 8)) % 8;
+	if (padding) {
+		content = pad_generic.obscure(content, {
+			pass: lineWidth,
+			pad: padding,
+			value: 0x00,
+			final: 1,
+		});
 	}
 
 	let out = new Uint8Array(content.length * planeCount / 8);
