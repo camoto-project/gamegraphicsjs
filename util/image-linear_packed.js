@@ -36,7 +36,7 @@ import { BitStream, BitView } from 'bit-buffer';
  *
  * @return {Uint8Array} 8bpp linear pixel data.
  */
-export function fromPacked({ content, bitDepth, widthPixels, widthBits, byteOrderMSB })
+export function fromPacked({ content, bitDepth, dims, widthBits, byteOrderMSB })
 {
 	// Shortcut for 0x0 image.
 	if (content.length === 0) {
@@ -49,14 +49,13 @@ export function fromPacked({ content, bitDepth, widthPixels, widthBits, byteOrde
 	bs.bigEndian = byteOrderMSB;
 
 	const targetWidthPixels = widthBits / bitDepth; // used to pad up to next byte
-	const numRows = content.length / (widthBits / 8);
-	const targetLengthBytes = numRows * widthPixels;
+	const targetLengthBytes = dims.x * dims.y;
 
 	let out = new Uint8Array(targetLengthBytes);
 	let outPos = 0, x = 0;
-	while (bs.bitsLeft >= bitDepth) {
-		if (x >= widthPixels) {
-			bs.index += bitDepth * (targetWidthPixels - widthPixels);
+	while ((bs.bitsLeft >= bitDepth) && (outPos < targetLengthBytes)) {
+		if (x >= dims.x) {
+			bs.index += bitDepth * (targetWidthPixels - dims.x);
 			x = 0;
 		} else {
 			out[outPos++] = bs.readBits(bitDepth, false);
@@ -79,7 +78,7 @@ export function fromPacked({ content, bitDepth, widthPixels, widthBits, byteOrde
  *
  * @return {Uint8Array} 1/2/4/8bpp linear pixel data.
  */
-export function toPacked({ content, bitDepth, widthPixels, widthBits, byteOrderMSB })
+export function toPacked({ content, bitDepth, dims, widthBits, byteOrderMSB })
 {
 	// Shortcut for 0x0 image.
 	if (content.length === 0) {
@@ -87,8 +86,7 @@ export function toPacked({ content, bitDepth, widthPixels, widthBits, byteOrderM
 	}
 
 	const targetWidthPixels = widthBits / bitDepth; // used to pad up to next byte
-	const numRows = content.length / widthPixels;
-	const targetLengthBytes = Math.ceil(numRows * widthBits / 8);
+	const targetLengthBytes = Math.ceil(widthBits * dims.y / 8);
 
 	let out = new ArrayBuffer(targetLengthBytes);
 	let bs = new BitStream(out);
@@ -96,8 +94,9 @@ export function toPacked({ content, bitDepth, widthPixels, widthBits, byteOrderM
 
 	let inPos = 0, x = 0;
 	while (inPos < content.length) {
-		if (x >= widthPixels) {
-			bs.writeBits(0, bitDepth * (targetWidthPixels - widthPixels));
+		if (x >= dims.x) {
+			// Pad the end of the line up to the end of the byte.
+			bs.writeBits(0, bitDepth * (targetWidthPixels - dims.x));
 			x = 0;
 		} else {
 			bs.writeBits(content[inPos++], bitDepth);
