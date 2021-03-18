@@ -55,7 +55,7 @@ export function fromPlanar({ content, planeCount, planeWidth, planeValues, byteO
 	let outpos = 0;
 	const widthBytes = Math.ceil(planeWidth / 8);
 	if (widthBytes <= 0) {
-		throw new Error(`fromBytePlanar() planeWidth=${planeWidth} too small!`);
+		throw new Error(`fromPlanar() planeWidth=${planeWidth} too small!`);
 	}
 	for (let i = 0; i < content.length; i += widthBytes) {
 		const plane = (i / widthBytes) % planeCount;
@@ -79,7 +79,7 @@ export function fromPlanar({ content, planeCount, planeWidth, planeValues, byteO
  *
  * The parameters are the same as for fromPlanar().
  *
- * @return {Uint8Array} 8bpp linear pixel data.
+ * @return {Uint8Array} 1/2/4/8bpp planar pixel data.
  */
 export function toPlanar({ content, planeCount, planeWidth, planeValues, byteOrderMSB })
 {
