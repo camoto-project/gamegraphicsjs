@@ -104,4 +104,28 @@ describe(`defaultPalette tests`, function() {
 		palEquals(pal, 176, [0x00, 0x00, 0x41, 0xFF]);
 	});
 
+	it('clones a palette correctly', function() {
+		let palOrig = DP.paletteVGA256();
+		let pal = palOrig.clone();
+
+		// Change the original to confirm the copy doesn't get modified.
+		palOrig[0] = [1, 2, 3, 4];
+		palOrig[32] = [5, 6, 7, 8];
+
+		assert.equal(pal.length, 256, 'Palette is wrong length');
+
+		palEquals(pal,  0, [0x00, 0x00, 0x00, 0xFF]);
+		palEquals(pal,  1, [0x00, 0x00, 0xAA, 0xFF]);
+		palEquals(pal,  6, [0xAA, 0x55, 0x00, 0xFF]);
+		palEquals(pal, 10, [0x55, 0xFF, 0x55, 0xFF]);
+		palEquals(pal, 14, [0xFF, 0xFF, 0x55, 0xFF]);
+		palEquals(pal, 15, [0xFF, 0xFF, 0xFF, 0xFF]);
+
+		palEquals(pal, 16, [0x00, 0x00, 0x00, 0xFF]);
+		palEquals(pal, 31, [0xFF, 0xFF, 0xFF, 0xFF]);
+
+		palEquals(pal,  32, [0x00, 0x00, 0xFF, 0xFF]);
+		palEquals(pal, 104, [0x00, 0x00, 0x71, 0xFF]);
+		palEquals(pal, 176, [0x00, 0x00, 0x41, 0xFF]);
+	});
 });

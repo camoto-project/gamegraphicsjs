@@ -34,4 +34,12 @@ export default class Palette extends Array
 		}
 	}
 	*/
+
+	clone() {
+		let copy = new Palette();
+		for (let i = 0; i < this.length; i++) {
+			copy[i] = this[i].slice(0);
+		}
+		return copy;
+	}
 }
