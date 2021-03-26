@@ -82,6 +82,12 @@ export default class Image
 	 * so that changes to the copy do not affect the original.
 	 */
 	clone() {
-		throw new Error('Not implemented');
+		return new Image(
+			{ ...this.dims },
+			new Uint8Array(this.pixels),
+			this.palette && this.palette.clone(),
+			{ ...this.hotspot },
+			this.postDelay,
+		);
 	}
 }
