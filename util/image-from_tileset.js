@@ -36,15 +36,22 @@ export function imageFromTileset(tiles, width)
 {
 	const { x: tileWidth, y: tileHeight } = tiles[0].dims;
 
-	let imageList = [];
+	let imageList = [], x = 0, y = 0, yMax = 0;
 	for (let t = 0; t < tiles.length; t++) {
+		if ((t > 0) && (t % width === 0)) {
+			// Wrap to the next line.
+			y += yMax;
+			yMax = 0;
+			x = 0;
+		}
+
 		imageList.push({
 			frame: tiles[t],
-			pos: {
-				x: (t % width) * tileWidth,
-				y: Math.floor(t / width) * tileHeight,
-			},
+			pos: { x, y },
 		});
+
+		x += tiles[t].dims.x;
+		yMax = Math.max(yMax, tiles[t].dims.y);
 	}
 
 	return imageCompose(imageList);
@@ -54,40 +61,50 @@ export function imageFromTileset(tiles, width)
  * Split an image into multiple smaller images, all the same size.
  * Undoes the effect of imageFromTileset().
  */
-export function tilesetFromImage(frame, tileDimensions, tileCount, bg = 0)
+export function tilesetFromImage(frame, originalFrames, bg = 0)
 {
 	if (!(frame instanceof Image)) {
 		throw new Error(`Bad parameter: tilesetFromImage() expects Image instance `
 			+ `as first parameter, got ${typeof frame}.`);
 	}
 
-	let tiles = [];
-	for (let ty = 0; ty < frame.dims.y; ty += tileDimensions.y) {
-		for (let tx = 0; tx < frame.dims.x; tx += tileDimensions.x) {
-			let pixels = new Uint8Array(tileDimensions.x * tileDimensions.y);
-			pixels.fill(bg);
+	let tiles = [], tx = 0, ty = 0, yMax = 0;
+	for (let t = 0; t < originalFrames.length; t++) {
+		const dims = originalFrames[t].dims;
 
-			// Copy all the rows for this tile.
-			for (let y = 0; y < tileDimensions.y; y++) {
-				const offSrc = (ty + y) * frame.dims.x + tx;
-				const offDst = y * tileDimensions.x;
-				const bufSrc = new Uint8Array(
-					frame.pixels.buffer,
-					frame.pixels.byteOffset + offSrc,
-					tileDimensions.x
-				);
-				pixels.set(bufSrc, offDst);
-			}
-			let img = new Image(
-				tileDimensions,
-				pixels,
-				frame.palette,
-			);
-			tiles.push(img);
-
-			// Abort if we have reached the required number of tiles.
-			if (tiles.length >= tileCount) break;
+		if (tx + dims.x > frame.dims.x) {
+			// Wrap to the next line.
+			ty += yMax;
+			yMax = 0;
+			tx = 0;
 		}
+
+		let pixels = new Uint8Array(dims.x * dims.y);
+		pixels.fill(bg);
+
+		// Copy all the rows for this tile.
+		for (let y = 0; y < dims.y; y++) {
+			const offSrc = (ty + y) * frame.dims.x + tx;
+			const offDst = y * dims.x;
+			if (frame.pixels.byteOffset + offSrc + dims.x > frame.pixels.length) {
+				throw new Error(`Pixel data for tile ${t} row ${y} runs past the end of the source image.`);
+			}
+			const bufSrc = new Uint8Array(
+				frame.pixels.buffer,
+				frame.pixels.byteOffset + offSrc,
+				dims.x
+			);
+			pixels.set(bufSrc, offDst);
+		}
+		let img = new Image(
+			dims,
+			pixels,
+			frame.palette,
+		);
+		tiles.push(img);
+
+		tx += dims.x;
+		yMax = Math.max(yMax, dims.y);
 	}
 
 	return tiles;
