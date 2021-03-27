@@ -27,6 +27,7 @@ export { default as Image } from './interface/image.js';
 export { default as Palette } from './interface/palette.js';
 export * from './util/image-compose.js';
 export * from './util/image-from_tileset.js';
+export * from './util/image-mask.js';
 export * from './util/palette-default.js';
 
 /**
