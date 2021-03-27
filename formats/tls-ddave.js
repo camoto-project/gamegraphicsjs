@@ -30,7 +30,11 @@ import ImageHandler from '../interface/imageHandler.js';
 import Image from '../interface/image.js';
 import { fromPlanar, toPlanar } from '../util/image-planar.js';
 import { fromPacked, toPacked } from '../util/image-linear_packed.js';
-import { paletteCGA4, CGAPaletteType } from '../util/palette-default.js';
+import {
+	CGAPaletteType,
+	paletteCGA16,
+	paletteCGA4,
+} from '../util/palette-default.js';
 
 const FIRST_TILE_WITH_DIMS = 53;
 
@@ -168,9 +172,17 @@ class Tileset_DDave_Common extends ImageHandler
 				dims = {x: tileHeader.width, y: tileHeader.height};
 				lenHeader = 4;
 			}
+			const offStart = thisOffset + lenHeader;
+			const lenTile = sizes[i] - lenHeader;
+			const offEnd = offStart + lenTile;
+			if (offEnd > buffer.length) {
+				debug(`Truncated output at tile ${i+1} of ${header.count}, tile ends `
+					+ `at ${offEnd} but file is only ${buffer.length} bytes long.`);
+					break;
+			}
 			let img = this.createImage(
 				dims,
-				buffer.getU8(thisOffset + lenHeader, sizes[i] - lenHeader)
+				buffer.getU8(offStart, lenTile)
 			);
 			images.push(img);
 			thisOffset += sizes[i];
@@ -278,11 +290,12 @@ export class tls_ddave_ega extends Tileset_DDave_Common
 			fromPlanar({
 				content: pixelData,
 				planeCount: 4,
-				planeWidth: 8,
+				planeWidth: Math.ceil(dims.x / 8) * 8,
 				lineWidth: dims.x,
 				planeValues: [8, 4, 2, 1],
 				byteOrderMSB: true,
 			}),
+			paletteCGA16(),
 		);
 	}
 
@@ -290,7 +303,7 @@ export class tls_ddave_ega extends Tileset_DDave_Common
 		return toPlanar({
 			content: pixels,
 			planeCount: 4,
-			planeWidth: 8,
+			planeWidth: Math.ceil(dims.x / 8) * 8,
 			lineWidth: dims.x,
 			planeValues: [8, 4, 2, 1],
 			byteOrderMSB: true,
