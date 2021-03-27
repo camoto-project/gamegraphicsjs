@@ -18,7 +18,7 @@
  */
 
 import Debug from '../util/debug.js';
-const debug = Debug.extend('image-planar');
+const debug = Debug.extend('image-compose');
 
 import Image from '../interface/image.js';
 
@@ -52,10 +52,14 @@ export function imageCompose(composition)
 	let bg = 0;
 	const palette = composition[0].frame.palette;
 	if (palette) {
-		for (const p of palette) {
-			if (p.alpha === 0) {
+		for (let i = 0; i < palette.length; i++) {
+			if ((palette[i] === undefined) || (palette[i][3] === undefined)) {
+				debug(`Palette entry ${i} is invalid.`);
+				throw new Error(`Palette entry ${i} is invalid.`);
+			}
+			if (palette[i][3] === 0) {
 				// Found a transparent colour, use that for the background.
-				bg = p;
+				bg = i;
 				break;
 			}
 		}
