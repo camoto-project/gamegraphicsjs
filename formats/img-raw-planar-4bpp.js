@@ -27,6 +27,8 @@ import Image from '../interface/image.js';
 import { fromPlanar, toPlanar } from '../util/image-planar.js';
 import { paletteCGA16 } from '../util/palette-default.js';
 
+const nullCo = (v, d) => ((v === null) || (v === undefined)) ? d : v;
+
 export default class Image_Raw_4bpp_Planar extends ImageHandler
 {
 	static metadata() {
@@ -52,9 +54,9 @@ export default class Image_Raw_4bpp_Planar extends ImageHandler
 	}
 
 	static identify(content, filename, options = {}) {
-		const width = options.width ?? 320;
-		const height = options.height ?? 200;
-		const planeCount = options.planeCount ?? 4;
+		const width = parseInt(nullCo(options.width, 320));
+		const height = parseInt(nullCo(options.height, 200));
+		const planeCount = parseInt(nullCo(options.planeCount, 4));
 
 		const expSize = width * height * planeCount / 8;
 		if (content.length !== expSize) {
@@ -71,8 +73,9 @@ export default class Image_Raw_4bpp_Planar extends ImageHandler
 	}
 
 	static read(content, options = {}) {
-		const width = parseInt(options.width ?? 320);
-		const height = parseInt(options.height ?? 200);
+		const width = parseInt(nullCo(options.width, 320));
+		const height = parseInt(nullCo(options.height, 200));
+		const planeCount = parseInt(nullCo(options.planeCount, 4));
 
 		if (width % 8) {
 			throw new Error(`Image width must be a multiple of 8 (limits.multipleSize ignored).`);
@@ -82,7 +85,7 @@ export default class Image_Raw_4bpp_Planar extends ImageHandler
 				{x: width, y: height},
 				fromPlanar({
 					content: content.main,
-					planeCount: options.planeCount ?? 4,
+					planeCount: planeCount,
 					planeWidth: width * height,
 					planeValues: [1, 2, 4, 8],
 					byteOrderMSB: true,
@@ -93,6 +96,8 @@ export default class Image_Raw_4bpp_Planar extends ImageHandler
 	}
 
 	static write(frames, options) {
+		const planeCount = parseInt(nullCo(options.planeCount, 4));
+
 		if (frames.length !== 1) {
 			throw new Error(`Can only write one frame to this format.`);
 		}
@@ -105,7 +110,7 @@ export default class Image_Raw_4bpp_Planar extends ImageHandler
 			content: {
 				main: toPlanar({
 					content: image.pixels,
-					planeCount: options.planeCount ?? 4,
+					planeCount: planeCount,
 					planeWidth: image.dims.x * image.dims.y,
 					planeValues: [1, 2, 4, 8],
 					byteOrderMSB: true,

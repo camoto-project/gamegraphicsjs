@@ -25,6 +25,8 @@ const debug = Debug.extend(FORMAT_ID);
 import ImageHandler from '../interface/imageHandler.js';
 import Image from '../interface/image.js';
 
+const nullCo = (v, d) => ((v === null) || (v === undefined)) ? d : v;
+
 export default class Image_Raw_8bpp_Linear extends ImageHandler
 {
 	static metadata() {
@@ -49,8 +51,8 @@ export default class Image_Raw_8bpp_Linear extends ImageHandler
 	}
 
 	static identify(content, filename, options = {}) {
-		const width = options.width ?? 320;
-		const height = options.height ?? 200;
+		const width = parseInt(nullCo(options.width, 320));
+		const height = parseInt(nullCo(options.height, 200));
 
 		const expSize = width * height;
 		if (content.length !== expSize) {
@@ -69,7 +71,10 @@ export default class Image_Raw_8bpp_Linear extends ImageHandler
 	static read(content, options = {}) {
 		return [
 			new Image(
-				{x: options.width ?? 320, y: options.height ?? 200},
+				{
+					x: parseInt(nullCo(options.width, 320)),
+					y: parseInt(nullCo(options.height, 200)),
+				},
 				content.main
 			),
 		];

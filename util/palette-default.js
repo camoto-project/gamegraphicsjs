@@ -99,7 +99,7 @@ export function paletteCGA4(variant, background)
 	const full = paletteCGA16();
 
 	return new Palette(
-		full[background ?? 0],
+		full[background || 0],
 		full[cga[1]],
 		full[cga[2]],
 		full[cga[3]],
