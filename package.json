@@ -32,9 +32,9 @@
   "homepage": "https://github.com/camoto-project/gamegraphicsjs#readme",
   "dependencies": {
     "@camoto/gamecomp": "^2.4.1",
+    "@camoto/pngjs": "^6.1.0",
     "@camoto/record-io-buffer": "^3.1.1",
-    "bit-buffer": "^0.2.5",
-    "pngjs": "^3.3.3"
+    "bit-buffer": "^0.2.5"
   },
   "devDependencies": {
     "command-line-args": "^5.1.1",
