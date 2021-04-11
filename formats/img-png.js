@@ -22,7 +22,7 @@ const FORMAT_ID = 'img-png';
 import Debug from '../util/debug.js';
 const debug = Debug.extend(FORMAT_ID);
 
-import { PNG } from 'pngjs';
+import { PNG } from '@camoto/pngjs';
 
 import ImageHandler from '../interface/imageHandler.js';
 import Image from '../interface/image.js';
