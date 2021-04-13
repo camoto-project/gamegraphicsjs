@@ -34,8 +34,6 @@ import { imageCompose } from './image-compose.js';
  */
 export function imageFromTileset(tiles, width)
 {
-	const { x: tileWidth, y: tileHeight } = tiles[0].dims;
-
 	let imageList = [], x = 0, y = 0, yMax = 0;
 	for (let t = 0; t < tiles.length; t++) {
 		if ((t > 0) && (t % width === 0)) {

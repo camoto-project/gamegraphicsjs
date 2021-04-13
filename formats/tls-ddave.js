@@ -63,8 +63,8 @@ class Tileset_DDave_Common extends ImageHandler
 
 		md.limits.minimumSize.x = 0;
 		md.limits.minimumSize.y = 0;
-		md.limits.maximumSize.x = undefined,
-		md.limits.maximumSize.y = undefined,
+		md.limits.maximumSize.x = undefined;
+		md.limits.maximumSize.y = undefined;
 		md.limits.depth = 8;
 		md.limits.hasPalette = false;
 		md.limits.frameCount.min = 1;
@@ -178,7 +178,7 @@ class Tileset_DDave_Common extends ImageHandler
 			if (offEnd > buffer.length) {
 				debug(`Truncated output at tile ${i+1} of ${header.count}, tile ends `
 					+ `at ${offEnd} but file is only ${buffer.length} bytes long.`);
-					break;
+				break;
 			}
 			let img = this.createImage(
 				dims,
