@@ -44,7 +44,8 @@ colors['error message'] = '1;31';
 colors['error stack'] = '1;37';
 
 // Standard image used for the conversion tests.
-function createStandardImage(width, height, cga = false) {
+function createStandardImage(width, height, depth, uniquePixel) {
+	const cga = depth < 4;
 	let pixels = new Uint8Array(width * height, 0x00);
 	const lastRow = (height - 1) * width;
 
@@ -64,6 +65,12 @@ function createStandardImage(width, height, cga = false) {
 	if ((width > 0) && (height > 0)) {
 		pixels[width * height - 1] = cga ? 0x01 : 0x0E;
 	}
+
+	// If uniquePixels was given, use it for the first pixel
+	if (uniquePixel !== undefined) {
+		pixels[width * (height - 1)] = uniquePixel >>> 0;
+	}
+
 	return pixels;
 }
 
@@ -139,6 +146,10 @@ for (const handler of gamegraphicsFormats) {
 				if (md.limits.hasPalette) {
 					assert.ok(md.limits.paletteDepth > 0, 'Has palette but missing paletteDepth');
 				}
+
+				assert.ok(md.limits.frameCount, 'Missing frameCount');
+				assert.ok(md.limits.frameCount.min >= 0, 'Minimum frame count is invalid');
+				assert.ok(md.limits.frameCount.max >= 0, 'Maximum frame count is invalid');
 			});
 
 		});
@@ -160,6 +171,7 @@ for (const handler of gamegraphicsFormats) {
 						sizename,
 					]);
 					contentEncoded = sizeContent[sizename];
+					assert.ok(contentEncoded.main.filename); // sanity check
 				});
 
 				// Read the image
@@ -218,21 +230,37 @@ for (const handler of gamegraphicsFormats) {
 							}
 						});
 					}
+
+					it(`should have the correct pixel values`, function() {
+						assert.ok(frames.length >= md.limits.frameCount.min, `Image has ${frames.length} frames, but the minimum permitted is ${md.limits.frameCount.min}`);
+						assert.ok(frames.length <= md.limits.frameCount.max, `Image has ${frames.length} frames, but the maximum permitted is ${md.limits.frameCount.max}`);
+						for (let f = 0; f < frames.length; f++) {
+							const expectedPixels = createStandardImage(dims.x, dims.y, md.depth, f);
+							TestUtil.buffersEqual(expectedPixels, frames[f].pixels, `Frame ${f} has wrong pixel values`);
+						}
+					});
 				});
 
 				// Write the image
 				describe('write()', function() {
-					let frames, image;
+					let frames = [];
 					before('generate standard image', function() {
-						image = new Image(
-							dims,
-							createStandardImage(dims.x, dims.y, false),
-							md.limits.hasPalette ? createStandardPalette(md.limits.transparentIndex) : null,
-							undefined
+						const frameCount = Math.max(
+							md.limits.frameCount.min,
+							Math.min(4, md.limits.frameCount.max || 99)
 						);
-						assert.notStrictEqual(image, undefined);
-						assert.notStrictEqual(image, null);
-						frames = [image];
+						const stdpal = md.limits.hasPalette ? createStandardPalette(md.limits.transparentIndex) : null;
+						for (let f = 0; f < frameCount; f++) {
+							let image = new Image(
+								dims,
+								createStandardImage(dims.x, dims.y, md.depth, f),
+								stdpal,
+								undefined
+							);
+							assert.notStrictEqual(image, undefined);
+							assert.notStrictEqual(image, null);
+							frames.push(image);
+						}
 					});
 
 					it('should write correctly', function() {
