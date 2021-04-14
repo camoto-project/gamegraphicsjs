@@ -116,8 +116,8 @@ export default class ImageHandler
 
 				/**
 				 * Maximum and minimum number of frames the format can read and write.
-				 * Defaults to 1 for normal images, but should be changed to 0 for
-				 * palette-only formats, and >1 for tilesets and animations.
+				 * Defaults to 1 for normal images.  Set to >1 for tilesets and
+				 * animations.  Palettes should be set to 1 with a maximumSize of 0x0.
 				 * max == undefined if there is no maximum.
 				 */
 				frameCount: { min: 1, max: 1 },

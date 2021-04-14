@@ -43,8 +43,8 @@ export default class Palette_VGA_8bit extends ImageHandler
 		md.limits.hasPalette = true;
 		md.limits.paletteDepth = 8;
 		md.limits.transparentIndex = null;
-		md.limits.frameCount.min = 0;
-		md.limits.frameCount.max = 0;
+		md.limits.frameCount.min = 1;
+		md.limits.frameCount.max = 1;
 
 		return md;
 	}
