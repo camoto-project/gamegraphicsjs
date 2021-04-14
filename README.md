@@ -23,6 +23,7 @@ read and write the image.
 
 | Game                      | Types                  | Code                    |
 |---------------------------|------------------------|-------------------------|
+| Captain Comic             | Sprites                | tls-ccomic-sprite       |
 | Cosmo's Cosmic Adventures | Full-screen images     | img-raw-planar-4bpp     |
 | Dangerous Dave            | Map tileset            | tls-ddave-{cga,ega,vga} |
 
