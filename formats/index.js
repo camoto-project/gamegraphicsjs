@@ -25,4 +25,5 @@ export { default as pal_vga_6bit } from './pal-vga-6bit.js';
 export { default as pal_vga_8bit } from './pal-vga-8bit.js';
 
 export { default as tls_ccomic_sprite } from './tls-ccomic-sprite.js';
+export { default as tls_cosmo } from './tls-cosmo.js';
 export * from './tls-ddave.js';

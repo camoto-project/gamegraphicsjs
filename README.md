@@ -25,6 +25,7 @@ read and write the image.
 |---------------------------|------------------------|-------------------------|
 | Captain Comic             | Sprites                | tls-ccomic-sprite       |
 | Cosmo's Cosmic Adventures | Full-screen images     | img-raw-planar-4bpp     |
+| Cosmo's Cosmic Adventures | Tilesets               | tls-cosmo               |
 | Dangerous Dave            | Map tileset            | tls-ddave-{cga,ega,vga} |
 
 ## Installation as an end-user
