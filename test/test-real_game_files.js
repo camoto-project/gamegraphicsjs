@@ -37,6 +37,18 @@ const gameFiles = {
 			'3KytfIvfaf9ggBAkdGIqiA7dxQU=',
 		],
 	},
+	'tls-ddave-cga': {
+		'cgadave.dav': [
+			's3aIWshFK2y/nO2BsQgL/VcNm5E=',
+			'FHrKxtWrhpxNTVFph2qjn/MeBlc=',
+		],
+	},
+	'tls-ddave-ega': {
+		'egadave.dav': [
+			's3aIWshFK2y/nO2BsQgL/VcNm5E=',
+			'lu9QYaLGLvixBd0xqWKyun7t7uw=',
+		],
+	},
 	'tls-ddave-vga': {
 		'vgadave.dav': [
 			's3aIWshFK2y/nO2BsQgL/VcNm5E=',

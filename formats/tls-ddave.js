@@ -95,16 +95,19 @@ class Tileset_DDave_Common extends ImageHandler
 		}
 
 		let buffer = new RecordBuffer(content);
-		const count = recordTypes.header.count.read(buffer);
-		if (content.length < 4 + count * 4) {
+		const header = buffer.readRecord(recordTypes.header);
+		if (content.length < 4 + header.count * 4) {
 			return {
 				valid: false,
 				reason: `FAT truncated.`,
 			};
 		}
 
-		for (let i = 0; i < count; i++) {
-			const thisOffset = recordTypes.fatEntry.offset.read(buffer);
+		let endOfLastTile = 0;
+		let tileSize = 16 * 16 * this.imageBitDepth() / 8;
+		for (let i = 0; i < header.count; i++) {
+			const fatEntry = buffer.readRecord(recordTypes.fatEntry);
+			const thisOffset = fatEntry.offset;
 			if (thisOffset + 4 > buffer.length) {
 				return {
 					valid: false,
@@ -112,22 +115,30 @@ class Tileset_DDave_Common extends ImageHandler
 				};
 			}
 
-			let tileSize;
 			if (i >= FIRST_TILE_WITH_DIMS) {
 				const origPos = buffer.getPos();
 				buffer.seekAbs(thisOffset);
 				const tileHeader = buffer.readRecord(recordTypes.tileHeader);
 				buffer.seekAbs(origPos);
 				tileSize = 4 + roundMultiple(tileHeader.width, 8) * tileHeader.height * this.imageBitDepth() / 8;
-			} else {
-				tileSize = 16 * 16 * this.imageBitDepth() / 8;
 			}
-			if (thisOffset + tileSize > buffer.length) {
+			endOfLastTile = thisOffset + tileSize;
+			if (endOfLastTile > buffer.length) {
 				return {
 					valid: false,
 					reason: `Tile ${i} runs past EOF.`,
 				};
 			}
+		}
+
+		// The original CGA data has two trailing bytes, EGA has four, and VGA has
+		// none.  Let's just complain if there are more than eight trailing bytes.
+		const lenTrailing = buffer.length - endOfLastTile;
+		if (lenTrailing > 8) {
+			return {
+				valid: false,
+				reason: `${lenTrailing} bytes of trailing data after tiles.`,
+			};
 		}
 
 		return {
