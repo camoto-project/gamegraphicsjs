@@ -95,7 +95,7 @@ export default class Image_Raw_4bpp_Planar extends ImageHandler
 		];
 	}
 
-	static write(frames, options) {
+	static write(frames, options = {}) {
 		const planeCount = parseInt(nullCo(options.planeCount, 4));
 
 		if (frames.length !== 1) {

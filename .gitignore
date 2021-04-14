@@ -1,4 +1,6 @@
 node_modules/
+test/img-raw-linear-8bpp/unlogic1.*
+test/img-raw-planar-4bpp/onemomnt.mni
 test/tls-ccomic-sprite/bird.shp
 test/tls-cosmo/tiles.mni
 test/tls-ddave-cga/cgadave.dav

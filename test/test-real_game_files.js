@@ -27,6 +27,16 @@ import TestUtil from './util.js';
 import { all as allFormats } from '../index.js';
 
 const gameFiles = {
+	'img-raw-linear-8bpp': {
+		'unlogic1.gra': [
+			'FIwTzEYTeDXeLfxWIsztlvAqoNE=',
+		],
+	},
+	'img-raw-planar-4bpp': {
+		'onemomnt.mni': [
+			'6gqRf6Uk4LfbO7k18vYFXuqGvhM=',
+		],
+	},
 	'tls-ccomic-sprite': {
 		'bird.shp': [
 			'lRGfccg1DQ8yQ6zQw+1H0vAhyyo=',
@@ -59,7 +69,15 @@ const gameFiles = {
 
 // List which handlers can't help but misdetect other files.
 const skipIdentify = {
+	'img-raw-linear-8bpp': [
+		'tls-cosmo', // just happens to be exactly 64000 bytes!
+	],
+	'tls-ccomic-sprite': [
+		'img-raw-planar-4bpp',
+	],
 	'tls-cosmo': [
+		'img-raw-linear-8bpp',
+		'img-raw-planar-4bpp',
 		'tls-ccomic-sprite',
 	],
 	'tls-ddave-vga': [
