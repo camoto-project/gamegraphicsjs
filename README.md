@@ -21,18 +21,17 @@ archive, supply the correct format identifier, pass any options (such as the
 image width and height for those formats that don't store it) and only then can
 read and write the image.
 
-| Game                      | Types                    | Code                  |
-|---------------------------|--------------------------|-----------------------|
-| Cosmo's Cosmic Adventures | Full-screen images       | img-raw-planar-4bpp   |
-| Dangerous Dave            | Map tileset              | tls-ddave-*           |
+| Game                      | Types                  | Code                    |
+|---------------------------|------------------------|-------------------------|
+| Cosmo's Cosmic Adventures | Full-screen images     | img-raw-planar-4bpp     |
+| Dangerous Dave            | Map tileset            | tls-ddave-{cga,ega,vga} |
 
 ## Installation as an end-user
 
-If you wish to use the command-line `gamearch` utility to work with
-game archives directly, you can install the library globally on your
-system:
+If you wish to use the command-line `gamegfx` utility to work with game images
+directly, you can install the CLI globally on your system:
 
-    npm install -g @camoto/gamegraphics
+    npm install -g @camoto/gamegraphics-cli
 
 ### Command line interface
 
@@ -71,17 +70,23 @@ See `cli/index.js` for example use.  The quick start is:
       height: 200,
     };
     
-    // Read an image into memory
+    // Read an image into memory.
     const handler = GameGraphics.getHandler('img-raw-vga');
-    const content = fs.readFileSync('image.raw');
+    const content = {
+        main: fs.readFileSync('image.raw'),
+        // Some formats need additional files here, see handler.supps()
+    };
     let image = handler.read(content, options);
     
-    // Change a pixel
+    // Change a pixel.
     image.pixels[0] = 5;
     
-    // Write the image back to disk with the modifications
-    const outBuffer = handler.write(image);
-    fs.writeFileSync('out.raw', outBuffer);
+    // Write the image back to disk with the modifications.
+    const output = handler.write(image);
+    fs.writeFileSync('out.raw', output.content.main);
+    
+    // Show any warnings.
+    console.log(output.warnings);
 
 ## Installation as a contributor
 
