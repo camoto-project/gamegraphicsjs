@@ -32,6 +32,27 @@ const gameFiles = {
 			'lRGfccg1DQ8yQ6zQw+1H0vAhyyo=',
 		],
 	},
+	'tls-cosmo': {
+		'tiles.mni': [
+			'3KytfIvfaf9ggBAkdGIqiA7dxQU=',
+		],
+	},
+	'tls-ddave-vga': {
+		'vgadave.dav': [
+			's3aIWshFK2y/nO2BsQgL/VcNm5E=',
+			'ObIbMbCFRL7882dsitHoAhz9xbY=',
+		],
+	},
+};
+
+// List which handlers can't help but misdetect other files.
+const skipIdentify = {
+	'tls-cosmo': [
+		'tls-ccomic-sprite',
+	],
+	'tls-ddave-vga': [
+		'tls-cosmo',
+	],
 };
 
 describe(`Tests with real game files (if present)`, function() {
@@ -84,8 +105,12 @@ describe(`Tests with real game files (if present)`, function() {
 					});
 				}
 
+				const skipFormats = skipIdentify[idFormat] || [];
 				for (const [ idFormat2, files2 ] of Object.entries(gameFiles)) {
 					if (idFormat2 === idFormat) continue; // skip ourselves
+
+					// Skip files listed in gameFiles[].skip.
+					if (skipFormats.includes(idFormat2)) continue;
 
 					if (!format[idFormat2]) {
 						throw new Error(`BUG: Tests tried to access non-existent format "${idFormat2}".`);
@@ -115,7 +140,7 @@ describe(`Tests with real game files (if present)`, function() {
 						if (!content) this.skip();
 						const img = handler.read(content[targetFile]);
 
-						for (let i = 0; i < img.length; i++) {
+						for (let i = 0; i < targetHash.length; i++) {
 							assert.equal(TestUtil.hash(img[i].pixels), targetHash[i],
 								`Pixel data for "${targetFile}" frame ${i} differs to what `
 								+ `was expected.`);
