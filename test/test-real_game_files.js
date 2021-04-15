@@ -37,6 +37,11 @@ const gameFiles = {
 			'6gqRf6Uk4LfbO7k18vYFXuqGvhM=',
 		],
 	},
+	'tls-ccomic-map': {
+		'castle.tt2': [
+			'XrxoTBlN7Y2cWbQlGCnpVsmX6pE=',
+		],
+	},
 	'tls-ccomic-sprite': {
 		'bird.shp': [
 			'lRGfccg1DQ8yQ6zQw+1H0vAhyyo=',
