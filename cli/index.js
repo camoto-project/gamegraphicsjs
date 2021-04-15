@@ -145,14 +145,16 @@ class Operations
 		const md = handler.metadata();
 		const options = this.parseOptions(md, params.options);
 
-		const problems = handler.checkLimits(this.selectedFrames, options);
-		if (problems.length) {
-			console.log('There are problems preventing the requested changes from taking place:\n');
-			for (let i = 0; i < problems.length; i++) {
-				console.log((i + 1).toString().padStart(2) + ': ' + problems[i]);
+		if (!params.force) {
+			const problems = handler.checkLimits(this.selectedFrames, options);
+			if (problems.length) {
+				console.log('There are problems preventing the requested changes from taking place:\n');
+				for (let i = 0; i < problems.length; i++) {
+					console.log((i + 1).toString().padStart(2) + ': ' + problems[i]);
+				}
+				console.log('\nPlease correct these issues and try again.\n');
+				throw new OperationsError('write: cannot save due to file format limitations.');
 			}
-			console.log('\nPlease correct these issues and try again.\n');
-			throw new OperationsError('write: cannot save due to file format limitations.');
 		}
 
 		console.warn('Writing to', params.target, 'as', params.format);
@@ -323,6 +325,7 @@ Operations.names = {
 		{ name: 'target', defaultOption: true },
 	],
 	write: [
+		{ name: 'force', alias: 'f', type: Boolean },
 		{ name: 'format', alias: 't' },
 		{ name: 'options', alias: 'o', lazyMultiple: true },
 		{ name: 'target', defaultOption: true },
@@ -397,8 +400,9 @@ Commands:
     Select an image from a list.  <index> is the number shown by 'info', e.g.
     0 for the first frame, 6.2.4.1 for a nested frame.
 
-  write -t <format> <file>
+  write [-f] -t <format> <file>
     Write the in-memory image to the local file <file>, in the given format.
+    -f forces writing even if there are warnings.
 
 Examples:
 
