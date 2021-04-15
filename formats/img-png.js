@@ -26,6 +26,7 @@ import { PNG } from '@camoto/pngjs';
 
 import ImageHandler from '../interface/imageHandler.js';
 import Image from '../interface/image.js';
+import Frame from '../interface/frame.js';
 import Palette from '../interface/palette.js';
 import { defaultPalette } from '../util/palette-default.js';
 
@@ -86,29 +87,31 @@ export default class Image_PNG extends ImageHandler
 			palette = defaultPalette(png.depth);
 		}
 
-		return [
-			new Image(
-				{x: png.width, y: png.height},
-				png.data,
-				palette
-			),
-		];
+		return new Image({
+			width: png.width,
+			height: png.height,
+			frames: [
+				new Frame({
+					pixels: png.data,
+				}),
+			],
+			palette,
+		});
 	}
 
-	static write(frames)
+	static write(image)
 	{
-		if (frames.length !== 1) {
+		if (image.frames.length !== 1) {
 			throw new Error(`Can only write one frame to this format.`);
 		}
-		const image = frames[0];
 
 		let png = new PNG();
-		png.width = image.dims.x;
-		png.height = image.dims.y;
-		png.data = image.pixels;
+		png.width = image.width;
+		png.height = image.height;
+		png.data = image.frames[0].pixels;
 
 		let maxPixel = 0;
-		for (const c of image.pixels) {
+		for (const c of image.frames[0].pixels) {
 			if (c > maxPixel) maxPixel = c;
 		}
 		if (maxPixel >= 16) {

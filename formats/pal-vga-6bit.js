@@ -44,8 +44,8 @@ export default class Palette_VGA_6bit extends ImageHandler
 		md.limits.hasPalette = true;
 		md.limits.paletteDepth = 6;
 		md.limits.transparentIndex = null;
-		md.limits.frameCount.min = 1;
-		md.limits.frameCount.max = 1;
+		md.limits.frameCount.min = 0;
+		md.limits.frameCount.max = 0;
 
 		return md;
 	}
@@ -99,28 +99,27 @@ export default class Palette_VGA_6bit extends ImageHandler
 			}
 		}
 
-		return [
-			new Image(
-				{x: 0, y: 0},
-				null,
-				palette
-			),
-		];
+		return new Image({
+			width: 0,
+			height: 0,
+			frames: [],
+			palette,
+		});
 	}
 
-	static write(frames)
+	static write(image)
 	{
-		if (frames.length !== 1) {
-			throw new Error(`Can only write one frame to this format.`);
-		}
-		const image = frames[0];
-
 		const palette = image.palette;
 		if (!palette) {
 			throw new Error('Cannot write a palette file if the image has no palette!');
 		}
 
 		let warnings = [];
+		if (image.frames.length > 0) {
+			warnings.push(`All frames have been discarded as this is a palette-only `
+				+ `format.`);
+		}
+
 		let content = new Uint8Array(256 * 3);
 		for (let i = 0; i < Math.min(palette.length, 256); i++) {
 			for (let c = 0; c < 3; c++) {

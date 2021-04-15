@@ -27,7 +27,8 @@ const debug = Debug.extend(FORMAT_ID);
 
 import ImageHandler from '../interface/imageHandler.js';
 import Image from '../interface/image.js';
-import { fromPlanar, toPlanar } from '../util/image-planar.js';
+import Frame from '../interface/frame.js';
+import { fromPlanar, toPlanar } from '../util/frame-planar.js';
 import { paletteCGA16 } from '../util/palette-default.js';
 
 const BYTES_PER_TILE = 32;
@@ -75,32 +76,34 @@ export default class Tileset_Cosmo extends ImageHandler
 	}
 
 	static read(content) {
-		return [
-			new Image(
-				{x: 8, y: (8 * content.main.length / BYTES_PER_TILE) >>> 0},
-				fromPlanar({
-					content: content.main,
-					planeCount: 4,
-					planeWidth: 8,
-					lineWidth: 8,
-					planeValues: [1, 2, 4, 8],
-					byteOrderMSB: true,
-				}),
-				paletteCGA16()
-			),
-		];
+		const frame = new Frame({
+			pixels: fromPlanar({
+				content: content.main,
+				planeCount: 4,
+				planeWidth: 8,
+				lineWidth: 8,
+				planeValues: [1, 2, 4, 8],
+				byteOrderMSB: true,
+			}),
+		});
+
+		return new Image({
+			width: 8,
+			height: (8 * content.main.length / BYTES_PER_TILE) >>> 0,
+			frames: [frame],
+			palette: paletteCGA16(),
+		});
 	}
 
-	static write(frames) {
-		if (frames.length !== 1) {
+	static write(image) {
+		if (image.frames.length !== 1) {
 			throw new Error(`Can only write one frame to this format.`);
 		}
-		const image = frames[0];
 
 		return {
 			content: {
 				main: toPlanar({
-					content: image.pixels,
+					content: image.frames[0].pixels,
 					planeCount: 4,
 					planeWidth: 8,
 					lineWidth: 8,

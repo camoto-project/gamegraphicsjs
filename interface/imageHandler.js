@@ -77,6 +77,13 @@ export default class ImageHandler
 				maximumSize: { x: undefined, y: undefined },
 
 				/**
+				 * `true` if each frame can have a width and height different to the
+				 * other frames, `false` (default) if all frames must be the same size,
+				 * the same as the main `Image.width` and `Image.height`.
+				 */
+				sizePerFrame: false,
+
+				/**
 				 * If the image dimensions can only be a multiple of some number,
 				 * specify it here.  For example planar image data is written as 8
 				 * pixels per byte, so these images must have widths that are a
@@ -106,21 +113,38 @@ export default class ImageHandler
 				paletteDepth: undefined,
 
 				/**
+				 * `true` if each frame can have its own palette, `false` (default) if
+				 * the main image palette applies to all frames.
+				 */
+				palettePerFrame: false,
+
+				/**
 				 * A palette index for a transparent colour, if this format always has
 				 * the same palette index marked as transparent.  `null` if no colours
 				 * can be transparent, or `undefined` if the transparency comes instead
 				 * from the alpha value in the palette (allowing any colour to play the
-				 * role of transparent.
+				 * role of transparent.  It is permitted for this value to be one larger
+				 * than the number of colours in the palette, in the case of a 16-colour
+				 * image with the 17th colour used for transparency.  This allows easier
+				 * use of image masks as they can be simply converted to an extra colour
+				 * and palette transparency used instead.
 				 */
 				transparentIndex: null,
 
 				/**
 				 * Maximum and minimum number of frames the format can read and write.
 				 * Defaults to 1 for normal images.  Set to >1 for tilesets and
-				 * animations.  Palettes should be set to 1 with a maximumSize of 0x0.
+				 * animations.  Palettes should be set to 0 with a maximumSize of 0x0.
 				 * max == undefined if there is no maximum.
 				 */
 				frameCount: { min: 1, max: 1 },
+
+				/**
+				 * A key/value list where the key matches a key in `Image.tags` and the
+				 * value is a description of what the tag represents.  Tags are for
+				 * metadata like titles, artist names, and so on.
+				 */
+				tags: {},
 			},
 			options: {},
 		};
@@ -136,40 +160,63 @@ export default class ImageHandler
 	 *   supplied image from being written in this format.  An empty array
 	 *   indicates no problems.
 	 */
-	static checkLimits(frames)
-	{
+	static checkLimits(image) {
 		const { limits } = this.metadata();
 		let issues = [];
 
-		for (let i = 0; i < frames.length; i++) {
-			const image = frames[i];
+		if (image.frames.length > limits.frameCount.max) {
+			issues.push(`This image has ${image.frames.length} frame(s) but the `
+				+ `format can only write images with up to ${limits.frameCount.max} `
+				+ `frame(s).`);
+		}
+		if (image.frames.length < limits.frameCount.min) {
+			issues.push(`This image has ${image.frames.length} frame(s) but the `
+				+ `format requires at least ${limits.frameCount.min} frame(s).`);
+		}
+
+		for (let f = 0; f < image.frames.length; f++) {
+			const frameWidth = (image.frames[f].width === undefined) ? image.width : image.frames[f].width;
+			const frameHeight = (image.frames[f].height === undefined) ? image.height : image.frames[f].height;
+
 			if (
 				(limits.maximumSize.x !== undefined)
-				&& (image.dims.x > limits.maximumSize.x)
+				&& (frameWidth > limits.maximumSize.x)
 			) {
-				issues.push(`Frame #${i}'s width (${image.dims.x}) is larger than the `
+				issues.push(`Frame #${f}'s width (${frameWidth}) is larger than the `
 					+ `maximum of ${limits.maximumSize.x} that this format can handle.`);
 			}
 
 			if (
 				(limits.maximumSize.y !== undefined)
-				&& (image.dims.y > limits.maximumSize.y)
+				&& (frameHeight > limits.maximumSize.y)
 			) {
-				issues.push(`Frame #${i}'s height (${image.dims.y}) is larger than the `
+				issues.push(`Frame #${f}'s height (${frameHeight}) is larger than the `
 					+ `maximum of ${limits.maximumSize.y} that this format can handle.`);
 			}
 
 			// Make sure the image doesn't have too many colours.
 			const maxIndex = 1 << limits.depth;
-			for (let i = 0; i < image.pixels.length; i++) {
-				if (image.pixels[i] >= maxIndex) {
-					const x = i % image.dims.width;
-					const y = i / image.dims.width;
-					issues.push(`Frame #${i} contains a pixel of colour index `
-						+ `${image.pixels[i]} at (${x},${y}), but this format only supports `
+			const pixels = image.frames[f].pixels;
+			for (let i = 0; i < pixels.length; i++) {
+				if (pixels[i] >= maxIndex) {
+					if (pixels[i] === limits.transparentIndex) {
+						// The out-of-range colour is assigned as transparent so allow it.
+						continue;
+					}
+					const x = i % frameWidth;
+					const y = i / frameWidth;
+					issues.push(`Frame #${f} contains a pixel of colour index `
+						+ `${pixels[i]} at (${x},${y}), but this format only supports `
 						+ `images with colour numbers less than ${maxIndex}.`);
 					break;
 				}
+			}
+		}
+
+		// Make sure we don't have metadata we can't write.
+		for (const idTag of Object.keys(image.tags)) {
+			if (!limits.tags[idTag]) {
+				issues.push(`This format cannot write the "${idTag}" tag.`);
 			}
 		}
 
@@ -263,10 +310,8 @@ export default class ImageHandler
 	 *   successfully. If not, the behaviour is undefined and a corrupted file
 	 *   might be produced.
 	 *
-	 * @param {Array<Image>} frames
-	 *   One or more image to encode.  Most formats will only support an array
-	 *   with a single element, unless they are tilesets or animations which
-	 *   support more than one frame.
+	 * @param {Image} image
+	 *   Image to encode.
 	 *
 	 * @param {object} options
 	 *   Object with keys matching `this.metadata().options` if present.  Used to
@@ -282,7 +327,7 @@ export default class ImageHandler
 	 *   disk or offering for download to the user.
 	 */
 	// eslint-disable-next-line no-unused-vars
-	static write(frames, options) {
+	static write(image, options) {
 		throw new Error('Not implemented yet.');
 	}
 }

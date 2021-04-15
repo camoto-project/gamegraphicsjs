@@ -28,8 +28,9 @@ const g_debug = Debug.extend(FORMAT_ID);
 import { RecordBuffer, RecordType } from '@camoto/record-io-buffer';
 import ImageHandler from '../interface/imageHandler.js';
 import Image from '../interface/image.js';
-import { fromPlanar, toPlanar } from '../util/image-planar.js';
-import { fromPacked, toPacked } from '../util/image-linear_packed.js';
+import Frame from '../interface/frame.js';
+import { fromPlanar, toPlanar } from '../util/frame-planar.js';
+import { fromPacked, toPacked } from '../util/frame-linear_packed.js';
 import {
 	CGAPaletteType,
 	paletteCGA16,
@@ -73,13 +74,14 @@ class Tileset_DDave_Common extends ImageHandler
 		return md;
 	}
 
-	static checkLimits(frames) {
-		let issues = super.checkLimits(frames);
+	static checkLimits(image) {
+		let issues = super.checkLimits(image);
 
-		for (let i = 0; i < Math.min(53, frames.length); i++) {
-			if ((frames[i].dims.x !== 16) || (frames[i].dims.y !== 16)) {
+		for (let f = 0; f < Math.min(53, image.frames.length); f++) {
+			const frame = image.frames[f];
+			if ((frame.width !== 16) || (frame.height !== 16)) {
 				issues.push(`The first 53 images can only be 16x16 pixels in size `
-					+ `(frame #${i} is ${frames[i].dims.x}x${frames[i].dims.y}).`);
+					+ `(frame #${f} is ${frame.width}x${frame.height}).`);
 			}
 		}
 
@@ -172,15 +174,16 @@ class Tileset_DDave_Common extends ImageHandler
 		}
 		sizes.push(buffer.length - lastOffset);
 
-		let images = [];
+		let frames = [];
 		let thisOffset = firstOffset;
+		let frameWidth = 16, frameHeight = 16;
 		for (let i = 0; i < header.count; i++) {
 			buffer.seekAbs(thisOffset);
-			let dims = {x: 16, y: 16};
 			let lenHeader = 0;
 			if (i >= FIRST_TILE_WITH_DIMS) {
 				const tileHeader = buffer.readRecord(recordTypes.tileHeader);
-				dims = {x: tileHeader.width, y: tileHeader.height};
+				frameWidth = tileHeader.width;
+				frameHeight = tileHeader.height;
 				lenHeader = 4;
 			}
 			const offStart = thisOffset + lenHeader;
@@ -191,48 +194,52 @@ class Tileset_DDave_Common extends ImageHandler
 					+ `at ${offEnd} but file is only ${buffer.length} bytes long.`);
 				break;
 			}
-			let img = this.createImage(
-				dims,
+			let img = this.createFrame(
+				frameWidth,
+				frameHeight,
 				buffer.getU8(offStart, lenTile)
 			);
-			images.push(img);
+			frames.push(img);
 			thisOffset += sizes[i];
 		}
 
-		return images;
+		return new Image({
+			frames,
+			palette: this.getPalette(),
+		});
 	}
 
-	static write(frames) {
+	static write(image) {
 		const debug = g_debug.extend('write');
 
 		// Calculate the size up front so we don't have to keep reallocating the
 		// buffer, improving performance.
-		const offEndFAT = 4 /* header */ + 4 * frames.length /* FAT */;
-		const finalSize = frames.reduce(
-			(a, b) => a + (b.dims.x * b.dims.y),
+		const offEndFAT = 4 /* header */ + 4 * image.frames.length /* FAT */;
+		const finalSize = image.frames.reduce(
+			(a, b) => a + (b.width * b.height),
 			offEndFAT,
 		);
 		let buffer = new RecordBuffer(finalSize);
 
 		// Write the file header.
 		buffer.writeRecord(recordTypes.header, {
-			count: frames.length,
+			count: image.frames.length,
 		});
 
 		// Write the pixel data.
 		let bufferMain = new RecordBuffer(finalSize);
-		for (let i = 0; i < frames.length; i++) {
+		for (let f = 0; f < image.frames.length; f++) {
 			// Write the next FAT entry.
 			buffer.writeRecord(recordTypes.fatEntry, {
 				offset: offEndFAT + bufferMain.getPos(),
 			});
-			if (i >= FIRST_TILE_WITH_DIMS) {
+			if (f >= FIRST_TILE_WITH_DIMS) {
 				bufferMain.writeRecord(recordTypes.tileHeader, {
-					width: frames[i].dims.x,
-					height: frames[i].dims.y,
+					width: image.frames[f].width,
+					height: image.frames[f].height,
 				});
 			}
-			const pixelData = this.getPixelData(frames[i].dims, frames[i].pixels);
+			const pixelData = this.getPixelData(image.frames[f]);
 			bufferMain.put(pixelData);
 		}
 
@@ -267,16 +274,21 @@ export class tls_ddave_vga extends Tileset_DDave_Common
 		return 8;
 	}
 
-	static createImage(dims, pixelData) {
-		return new Image(
-			dims,
-			pixelData,
-		);
+	static getPalette() {
+		return undefined;
 	}
 
-	static getPixelData(dims, pixels) {
+	static createFrame(width, height, pixelData) {
+		return new Frame({
+			width,
+			height,
+			pixels: pixelData,
+		});
+	}
+
+	static getPixelData(frame) {
 		// Pixel data is already in 8bpp format.
-		return pixels;
+		return frame.pixels;
 	}
 }
 
@@ -295,27 +307,31 @@ export class tls_ddave_ega extends Tileset_DDave_Common
 		return 4;
 	}
 
-	static createImage(dims, pixelData) {
-		return new Image(
-			dims,
-			fromPlanar({
+	static getPalette() {
+		return paletteCGA16();
+	}
+
+	static createFrame(width, height, pixelData) {
+		return new Frame({
+			width,
+			height,
+			pixels: fromPlanar({
 				content: pixelData,
 				planeCount: 4,
-				planeWidth: Math.ceil(dims.x / 8) * 8,
-				lineWidth: dims.x,
+				planeWidth: Math.ceil(width / 8) * 8,
+				lineWidth: width,
 				planeValues: [8, 4, 2, 1],
 				byteOrderMSB: true,
 			}),
-			paletteCGA16(),
-		);
+		});
 	}
 
-	static getPixelData(dims, pixels) {
+	static getPixelData(frame) {
 		return toPlanar({
-			content: pixels,
+			content: frame.pixels,
 			planeCount: 4,
-			planeWidth: Math.ceil(dims.x / 8) * 8,
-			lineWidth: dims.x,
+			planeWidth: Math.ceil(frame.width / 8) * 8,
+			lineWidth: frame.width,
 			planeValues: [8, 4, 2, 1],
 			byteOrderMSB: true,
 		});
@@ -337,26 +353,32 @@ export class tls_ddave_cga extends Tileset_DDave_Common
 		return 2;
 	}
 
-	static createImage(dims, pixelData) {
-		return new Image(
-			dims,
-			fromPacked({
-				content: pixelData,
-				bitDepth: this.imageBitDepth(),
-				dims,
-				widthBits: Math.ceil(dims.x * this.imageBitDepth() / 8) * 8,
-				byteOrderMSB: true,
-			}),
-			paletteCGA4(CGAPaletteType.CyanMagentaBright, 0),
-		);
+	static getPalette() {
+		return paletteCGA4(CGAPaletteType.CyanMagentaBright, 0);
 	}
 
-	static getPixelData(dims, pixels) {
+	static createFrame(width, height, pixelData) {
+		return new Frame({
+			width,
+			height,
+			pixels: fromPacked({
+				content: pixelData,
+				bitDepth: this.imageBitDepth(),
+				width,
+				height,
+				widthBits: Math.ceil(width * this.imageBitDepth() / 8) * 8,
+				byteOrderMSB: true,
+			}),
+		});
+	}
+
+	static getPixelData(frame) {
 		return toPacked({
-			content: pixels,
+			content: frame.pixels,
 			bitDepth: this.imageBitDepth(),
-			dims,
-			widthBits: Math.ceil(dims.x * this.imageBitDepth() / 8) * 8,
+			width: frame.width,
+			height: frame.height,
+			widthBits: Math.ceil(frame.width * this.imageBitDepth() / 8) * 8,
 			byteOrderMSB: true,
 		});
 	}

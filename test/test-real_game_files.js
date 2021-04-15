@@ -170,9 +170,9 @@ describe(`Tests with real game files (if present)`, function() {
 						if (!content) this.skip();
 						const img = handler.read(content[targetFile]);
 
-						for (let i = 0; i < targetHash.length; i++) {
-							assert.equal(TestUtil.hash(img[i].pixels), targetHash[i],
-								`Pixel data for "${targetFile}" frame ${i} differs to what `
+						for (let f = 0; f < targetHash.length; f++) {
+							assert.equal(TestUtil.hash(img.frames[f].pixels), targetHash[f],
+								`Pixel data for "${targetFile}" frame ${f} differs to what `
 								+ `was expected.`);
 						}
 
@@ -184,13 +184,16 @@ describe(`Tests with real game files (if present)`, function() {
 						// which also passed the hash check.  This way if the content is
 						// wrong, we get a hex dump of the differences rather than just
 						// a "hash doesn't match" error.
-						for (let i = 0; i < Math.max(img.length, img2.length); i++) {
+						const largestFrames = Math.max(img.frames.length, img2.frames.length);
+						for (let f = 0; f < largestFrames; f++) {
+							const frame = img.frames[f];
+							const frame2 = img2.frames[f];
 							TestUtil.buffersEqual(
-								(img[i] && img[i].pixels) || new Uint8Array(),
-								(img2[i] && img2[i].pixels) || new Uint8Array()
+								(frame && frame.pixels) || new Uint8Array(),
+								(frame2 && frame2.pixels) || new Uint8Array()
 							);
-							assert.equal(img[i].dims.x, img2[i].dims.x, `Width of frame ${i} changed after rewrite`);
-							assert.equal(img[i].dims.y, img2[i].dims.y, `Height of frame ${i} changed after rewrite`);
+							assert.equal(frame.width, frame2.width, `Width of frame ${f} changed after rewrite`);
+							assert.equal(frame.height, frame2.height, `Height of frame ${f} changed after rewrite`);
 						}
 					});
 				}

@@ -1,5 +1,5 @@
 /*
- * Tests for util/image-planar.js.
+ * Tests for util/frame-planar.js.
  *
  * Copyright (C) 2010-2021 Adam Nielsen <malvineous@shikadi.net>
  *
@@ -18,7 +18,7 @@
  */
 
 import TestUtil from './util.js';
-import { fromPlanar, toPlanar } from '../util/image-planar.js';
+import { fromPlanar, toPlanar } from '../util/frame-planar.js';
 
 function runTest(msg, { planar, linear, planeCount, planeWidth, lineWidth, isMSB, planeValues }) {
 	describe(msg, function() {
@@ -50,7 +50,7 @@ function runTest(msg, { planar, linear, planeCount, planeWidth, lineWidth, isMSB
 	});
 }
 
-describe(`Extra tests for util/image-planar`, function() {
+describe(`Extra tests for util/frame-planar`, function() {
 	runTest(
 		`should handle 4-plane byte-planar data (8x1)`,
 		{
@@ -407,7 +407,7 @@ describe(`Extra tests for util/image-planar`, function() {
 	);
 
 	runTest(
-		`should handle image widths not a multiple of 8 (7x1)`,
+		`should handle frame widths not a multiple of 8 (7x1)`,
 		{
 			planar: [
 				0xFE,
@@ -427,7 +427,7 @@ describe(`Extra tests for util/image-planar`, function() {
 	);
 
 	runTest(
-		`should handle image widths not a multiple of 8 (7x2)`,
+		`should handle frame widths not a multiple of 8 (7x2)`,
 		{
 			planar: [
 				0xFE, 0x70, 0x3E, 0x18,
@@ -446,7 +446,7 @@ describe(`Extra tests for util/image-planar`, function() {
 	);
 
 	runTest(
-		`should handle image widths not a multiple of 8 (9x1)`,
+		`should handle frame widths not a multiple of 8 (9x1)`,
 		{
 			planar: [
 				0xFE, 0x00,
@@ -466,7 +466,7 @@ describe(`Extra tests for util/image-planar`, function() {
 	);
 
 	runTest(
-		`should handle image widths not a multiple of 8 (9x2)`,
+		`should handle frame widths not a multiple of 8 (9x2)`,
 		{
 			planar: [
 				0xFE, 0x00,

@@ -18,7 +18,7 @@
  */
 
 import Debug from '../util/debug.js';
-const debug = Debug.extend('image-planar');
+const debug = Debug.extend('frame-planar');
 
 import { pad_generic } from '@camoto/gamecomp';
 

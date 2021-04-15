@@ -20,52 +20,57 @@
 import assert from 'assert';
 import TestUtil from './util.js';
 import Image from '../interface/image.js';
-import { imageFromTileset, tilesetFromImage } from '../util/image-from_tileset.js';
+import Frame from '../interface/frame.js';
+import { frameFromTileset, tilesetFromFrame } from '../util/frame-from_tileset.js';
 
-function runTest(msg, { tiles, image, width, bg }) {
+function runTest(msg, { tiles, image: srcimage, width, bg }) {
 	describe(msg, function() {
 
-		function createImages(tiles) {
-			let images = [];
+		function createImage(tiles) {
+			let frames = [];
 			for (const t of tiles) {
-				images.push(
-					new Image(
-						{ x: t.width, y: t.height },
-						Uint8Array.from(t.pixels)
-					)
+				frames.push(
+					new Frame({
+						width: t.width,
+						height: t.height,
+						pixels: Uint8Array.from(t.pixels),
+					})
 				);
 			}
 
-			return images;
+			return new Image({
+				frames,
+			});
 		}
-		const imgTiles = createImages(tiles);
+		const imgTiles = createImage(tiles);
 
-		it('imageFromTileset()', function() {
-			const actual = imageFromTileset(
+		it('frameFromTileset()', function() {
+			const actual = frameFromTileset(
 				imgTiles,
 				width
 			);
-			TestUtil.buffersEqual(image.pixels, actual.pixels);
-			assert.equal(actual.dims.x, image.width, `Mismatch in composed tileset image width`);
-			assert.equal(actual.dims.y, image.height, `Mismatch in composed tileset image height`);
+			TestUtil.buffersEqual(srcimage.pixels, actual.pixels);
+			assert.equal(actual.width, srcimage.width, `Mismatch in composed tileset image width`);
+			assert.equal(actual.height, srcimage.height, `Mismatch in composed tileset image height`);
 		});
 
-		it('tilesetFromImage()', function() {
-			const actual = tilesetFromImage(
-				new Image(
-					{ x: image.width, y: image.height },
-					Uint8Array.from(image.pixels)
-				),
+		it('tilesetFromFrame()', function() {
+			const actual = tilesetFromFrame(
+				new Frame({
+					width: srcimage.width,
+					height: srcimage.height,
+					pixels: Uint8Array.from(srcimage.pixels),
+				}),
 				imgTiles,
 				bg,
 			);
 
 			for (let i = 0; i < tiles.length; i++) {
-				TestUtil.buffersEqual(imgTiles[i].pixels, actual[i].pixels);
-				assert.equal(imgTiles[i].dims.x, actual[i].dims.x);
-				assert.equal(imgTiles[i].dims.y, actual[i].dims.y);
+				TestUtil.buffersEqual(imgTiles.frames[i].pixels, actual.frames[i].pixels);
+				assert.equal(imgTiles.frames[i].width, actual.frames[i].width);
+				assert.equal(imgTiles.frames[i].height, actual.frames[i].height);
 			}
-			assert.equal(imgTiles.length, actual.length);
+			assert.equal(imgTiles.frames.length, actual.frames.length);
 		});
 
 	});

@@ -27,7 +27,8 @@ const debug = Debug.extend(FORMAT_ID);
 
 import ImageHandler from '../interface/imageHandler.js';
 import Image from '../interface/image.js';
-import { fromPlanar, toPlanar } from '../util/image-planar.js';
+import Frame from '../interface/frame.js';
+import { fromPlanar, toPlanar } from '../util/frame-planar.js';
 import { paletteCGA16 } from '../util/palette-default.js';
 
 const BYTES_PER_TILE = 160;
@@ -75,32 +76,34 @@ export default class Tileset_CComic_Sprite extends ImageHandler
 	}
 
 	static read(content) {
-		return [
-			new Image(
-				{x: 16, y: (16 * content.main.length / BYTES_PER_TILE) >>> 0},
-				fromPlanar({
-					content: content.main,
-					planeCount: 5,
-					planeWidth: 16 * 16,
-					lineWidth: 16,
-					planeValues: [1, 2, 4, 8, 16],
-					byteOrderMSB: true,
-				}),
-				paletteCGA16()
-			),
-		];
+		const frame = new Frame({
+			pixels: fromPlanar({
+				content: content.main,
+				planeCount: 5,
+				planeWidth: 16 * 16,
+				lineWidth: 16,
+				planeValues: [1, 2, 4, 8, 16],
+				byteOrderMSB: true,
+			}),
+		});
+
+		return new Image({
+			width: 16,
+			height: (16 * content.main.length / BYTES_PER_TILE) >>> 0,
+			frames: [frame],
+			palette: paletteCGA16(),
+		});
 	}
 
-	static write(frames) {
-		if (frames.length !== 1) {
+	static write(image) {
+		if (image.frames.length !== 1) {
 			throw new Error(`Can only write one frame to this format.`);
 		}
-		const image = frames[0];
 
 		return {
 			content: {
 				main: toPlanar({
-					content: image.pixels,
+					content: image.frames[0].pixels,
 					planeCount: 5,
 					planeWidth: 16 * 16,
 					lineWidth: 16,

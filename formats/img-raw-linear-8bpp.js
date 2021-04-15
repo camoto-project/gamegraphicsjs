@@ -24,6 +24,7 @@ const debug = Debug.extend(FORMAT_ID);
 
 import ImageHandler from '../interface/imageHandler.js';
 import Image from '../interface/image.js';
+import Frame from '../interface/frame.js';
 
 const nullCo = (v, d) => ((v === null) || (v === undefined)) ? d : v;
 
@@ -69,26 +70,25 @@ export default class Image_Raw_8bpp_Linear extends ImageHandler
 	}
 
 	static read(content, options = {}) {
-		return [
-			new Image(
-				{
-					x: parseInt(nullCo(options.width, 320)),
-					y: parseInt(nullCo(options.height, 200)),
-				},
-				content.main
-			),
-		];
+		return new Image({
+			width: parseInt(nullCo(options.width, 320)),
+			height: parseInt(nullCo(options.height, 200)),
+			frames: [
+				new Frame({
+					pixels: content.main,
+				}),
+			],
+		});
 	}
 
-	static write(frames) {
-		if (frames.length !== 1) {
+	static write(image) {
+		if (image.frames.length !== 1) {
 			throw new Error(`Can only write one frame to this format.`);
 		}
-		const image = frames[0];
 
 		return {
 			content: {
-				main: image.pixels,
+				main: image.frames[0].pixels,
 			},
 			warnings: [],
 		};

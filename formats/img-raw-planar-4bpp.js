@@ -24,7 +24,8 @@ const debug = Debug.extend(FORMAT_ID);
 
 import ImageHandler from '../interface/imageHandler.js';
 import Image from '../interface/image.js';
-import { fromPlanar, toPlanar } from '../util/image-planar.js';
+import Frame from '../interface/frame.js';
+import { fromPlanar, toPlanar } from '../util/frame-planar.js';
 import { paletteCGA16 } from '../util/palette-default.js';
 
 const nullCo = (v, d) => ((v === null) || (v === undefined)) ? d : v;
@@ -80,38 +81,41 @@ export default class Image_Raw_4bpp_Planar extends ImageHandler
 		if (width % 8) {
 			throw new Error(`Image width must be a multiple of 8 (limits.multipleSize ignored).`);
 		}
-		return [
-			new Image(
-				{x: width, y: height},
-				fromPlanar({
-					content: content.main,
-					planeCount: planeCount,
-					planeWidth: width * height,
-					planeValues: [1, 2, 4, 8],
-					byteOrderMSB: true,
+		return new Image({
+			width,
+			height,
+			frames: [
+				new Frame({
+					pixels: fromPlanar({
+						content: content.main,
+						planeCount: planeCount,
+						planeWidth: width * height,
+						planeValues: [1, 2, 4, 8],
+						byteOrderMSB: true,
+					}),
 				}),
-				paletteCGA16()
-			),
-		];
+			],
+			palette: paletteCGA16(),
+		});
 	}
 
-	static write(frames, options = {}) {
+	static write(image, options = {}) {
 		const planeCount = parseInt(nullCo(options.planeCount, 4));
 
-		if (frames.length !== 1) {
+		if (image.frames.length !== 1) {
 			throw new Error(`Can only write one frame to this format.`);
 		}
-		const image = frames[0];
 
-		if (image.dims.x % 8) {
-			throw new Error(`Image width must be a multiple of 8 (limits.multipleSize ignored).`);
+		if (image.width % 8) {
+			throw new Error(`BUG: Image width must be a multiple of 8 (limits.multipleSize ignored).`);
 		}
+
 		return {
 			content: {
 				main: toPlanar({
-					content: image.pixels,
+					content: image.frames[0].pixels,
 					planeCount: planeCount,
-					planeWidth: image.dims.x * image.dims.y,
+					planeWidth: image.width * image.height,
 					planeValues: [1, 2, 4, 8],
 					byteOrderMSB: true,
 				}),

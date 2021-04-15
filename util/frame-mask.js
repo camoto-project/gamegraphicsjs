@@ -1,5 +1,5 @@
 /*
- * Conversion functions for image masks.
+ * Conversion functions for frame masks.
  *
  * Copyright (C) 2010-2021 Adam Nielsen <malvineous@shikadi.net>
  *
@@ -18,7 +18,7 @@
  */
 
 import Debug from '../util/debug.js';
-const debug = Debug.extend('image-mask');
+const debug = Debug.extend('frame-mask');
 
 /**
  * Convert a visible frame and mask frame into a single frame with transparent
@@ -43,14 +43,14 @@ const debug = Debug.extend('image-mask');
  * @return {Image} A single image made from combining the visible image and
  *   the mask.
  */
-export function imageFromMask({imgVisible, imgMask, cb})
+export function frameFromMask({frVisible, frMask, cb})
 {
-	let img = imgVisible.clone();
-	for (let p = 0; p < img.pixels.length; p++) {
-		img.pixels[p] = cb(img.pixels[p], imgMask.pixels[p]);
+	let frOut = frVisible.clone();
+	for (let p = 0; p < frOut.pixels.length; p++) {
+		frOut.pixels[p] = cb(frOut.pixels[p], frMask.pixels[p]);
 	}
 
-	return img;
+	return frOut;
 }
 
 /**
@@ -70,18 +70,18 @@ export function imageFromMask({imgVisible, imgMask, cb})
  * @return {Object} with two properties, `imgVisible` and `imgMask`, both
  *   `Image` instances.
  */
-export function maskFromImage({ img, cb })
+export function maskFromFrame({ frame, cb })
 {
-	let imgVisible = img.clone();
-	let imgMask = img.clone();
-	for (let p = 0; p < imgVisible.pixels.length; p++) {
-		const [ v, m ] = cb(img.pixels[p]);
-		imgVisible.pixels[p] = v;
-		imgMask.pixels[p] = m;
+	let frVisible = frame.clone();
+	let frMask = frame.clone();
+	for (let p = 0; p < frVisible.pixels.length; p++) {
+		const [ v, m ] = cb(frame.pixels[p]);
+		frVisible.pixels[p] = v;
+		frMask.pixels[p] = m;
 	}
 
 	return {
-		imgVisible,
-		imgMask,
+		frVisible,
+		frMask,
 	};
 }

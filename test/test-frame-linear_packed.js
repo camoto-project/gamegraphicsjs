@@ -1,5 +1,5 @@
 /*
- * Tests for util/image-linear_packed.js.
+ * Tests for util/frame-linear_packed.js.
  *
  * Copyright (C) 2010-2021 Adam Nielsen <malvineous@shikadi.net>
  *
@@ -18,16 +18,17 @@
  */
 
 import TestUtil from './util.js';
-import { fromPacked, toPacked } from '../util/image-linear_packed.js';
+import { fromPacked, toPacked } from '../util/frame-linear_packed.js';
 
-function runTest(msg, { packed, linear, bitDepth, dims, widthBits, isMSB }) {
+function runTest(msg, { packed, linear, bitDepth, width, height, widthBits, isMSB }) {
 	describe(msg, function() {
 
 		it('fromPacked()', function() {
 			const actual = fromPacked({
 				content: Uint8Array.from(packed),
 				bitDepth,
-				dims,
+				width,
+				height,
 				widthBits,
 				byteOrderMSB: isMSB,
 			});
@@ -38,7 +39,8 @@ function runTest(msg, { packed, linear, bitDepth, dims, widthBits, isMSB }) {
 			const actual = toPacked({
 				content: Uint8Array.from(linear),
 				bitDepth,
-				dims,
+				width,
+				height,
 				widthBits,
 				byteOrderMSB: isMSB,
 			});
@@ -48,7 +50,7 @@ function runTest(msg, { packed, linear, bitDepth, dims, widthBits, isMSB }) {
 	});
 }
 
-describe(`Extra tests for util/image-packed`, function() {
+describe(`Extra tests for util/frame-packed`, function() {
 	runTest(
 		`should handle 4bpp linear data (8x1)`,
 		{
@@ -59,7 +61,8 @@ describe(`Extra tests for util/image-packed`, function() {
 				0x01, 0x03, 0x07, 0x0F, 0x0D, 0x05, 0x05, 0x05,
 			],
 			bitDepth: 4,
-			dims: { x: 8, y: 1 },
+			width: 8,
+			height: 1,
 			widthBits: 32,
 			isMSB: true,
 		}
@@ -77,7 +80,8 @@ describe(`Extra tests for util/image-packed`, function() {
 				0x06, 0x05, 0x06, 0x05, 0x06, 0x05, 0x06, 0x0D,
 			],
 			bitDepth: 4,
-			dims: { x: 8, y: 2 },
+			width: 8,
+			height: 2,
 			widthBits: 32,
 			isMSB: true,
 		}
@@ -94,7 +98,8 @@ describe(`Extra tests for util/image-packed`, function() {
 				0x06, 0x05, 0x06, 0x05, 0x06, 0x05, 0x06, 0x0D,
 			],
 			bitDepth: 4,
-			dims: { x: 16, y: 1 },
+			width: 16,
+			height: 1,
 			widthBits: 64,
 			isMSB: true,
 		}
@@ -114,7 +119,8 @@ describe(`Extra tests for util/image-packed`, function() {
 				0x01, 0x02, 0x01, 0x02, 0x04, 0x08, 0x04, 0x08,
 			],
 			bitDepth: 4,
-			dims: { x: 16, y: 2 },
+			width: 16,
+			height: 2,
 			widthBits: 64,
 			isMSB: true,
 		}
@@ -130,7 +136,8 @@ describe(`Extra tests for util/image-packed`, function() {
 				0x00, 0x01, 0x00, 0x03, 0x01, 0x03, 0x03, 0x03,
 			],
 			bitDepth: 2,
-			dims: { x: 8, y: 1 },
+			width: 8,
+			height: 1,
 			widthBits: 16,
 			isMSB: true,
 		}
@@ -148,7 +155,8 @@ describe(`Extra tests for util/image-packed`, function() {
 				0x03, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
 			],
 			bitDepth: 2,
-			dims: { x: 8, y: 2 },
+			width: 8,
+			height: 2,
 			widthBits: 16,
 			isMSB: true,
 		}
@@ -164,7 +172,8 @@ describe(`Extra tests for util/image-packed`, function() {
 				0x01, 0x04, 0x00, 0x00, 0x00, 0x00, 0x08, 0x02,
 			],
 			bitDepth: 4,
-			dims: { x: 8, y: 1 },
+			width: 8,
+			height: 1,
 			widthBits: 32,
 			isMSB: true,
 		}
@@ -180,7 +189,8 @@ describe(`Extra tests for util/image-packed`, function() {
 				0x02, 0x08, 0x00, 0x00, 0x00, 0x00, 0x04, 0x01,
 			],
 			bitDepth: 4,
-			dims: { x: 8, y: 1 },
+			width: 8,
+			height: 1,
 			widthBits: 32,
 			isMSB: false,
 		}
@@ -196,7 +206,8 @@ describe(`Extra tests for util/image-packed`, function() {
 				0x03, 0x00, 0x01, 0x00, 0x03, 0x03, 0x03, 0x01,
 			],
 			bitDepth: 2,
-			dims: { x: 8, y: 1 },
+			width: 8,
+			height: 1,
 			widthBits: 16,
 			isMSB: false,
 		}
@@ -215,7 +226,8 @@ describe(`Extra tests for util/image-packed`, function() {
 				0x03, 0x02, 0x01, 0x00, 0x01, 0x01, 0x03, 0x03,
 			],
 			bitDepth: 2,
-			dims: { x: 8, y: 2 },
+			width: 8,
+			height: 2,
 			widthBits: 16,
 			isMSB: false,
 		}
@@ -231,7 +243,8 @@ describe(`Extra tests for util/image-packed`, function() {
 				0x02, 0x08, 0x06, 0x05, 0x03, 0x01, 0x04,
 			],
 			bitDepth: 4,
-			dims: { x: 7, y: 1 },
+			width: 7,
+			height: 1,
 			widthBits: 32,
 			isMSB: true,
 		}
@@ -249,7 +262,8 @@ describe(`Extra tests for util/image-packed`, function() {
 				0x07, 0x09, 0x04, 0x03, 0x02, 0x06, 0x05,
 			],
 			bitDepth: 4,
-			dims: { x: 7, y: 2 },
+			width: 7,
+			height: 2,
 			widthBits: 32,
 			isMSB: true,
 		}
@@ -267,7 +281,8 @@ describe(`Extra tests for util/image-packed`, function() {
 				0x02, 0x01, 0x00, 0x03, 0x02, 0x03, 0x01,
 			],
 			bitDepth: 2,
-			dims: { x: 7, y: 2 },
+			width: 7,
+			height: 2,
 			widthBits: 16,
 			isMSB: true,
 		}
@@ -285,7 +300,8 @@ describe(`Extra tests for util/image-packed`, function() {
 				0x02, 0x01, 0x02, 0x01, 0x02, 0x01, 0x02, 0x01, 0x02, 0x01, 0x02, 0x01, 0x02, 0x01,
 			],
 			bitDepth: 2,
-			dims: { x: 14, y: 2 },
+			width: 14,
+			height: 2,
 			widthBits: 32,
 			isMSB: true,
 		}
@@ -303,7 +319,8 @@ describe(`Extra tests for util/image-packed`, function() {
 				0x03, 0x01, 0x03, 0x01, 0x03, 0x01, 0x03, 0x01, 0x03,
 			],
 			bitDepth: 2,
-			dims: { x: 9, y: 2 },
+			width: 9,
+			height: 2,
 			widthBits: 24,
 			isMSB: true,
 		}
@@ -321,7 +338,8 @@ describe(`Extra tests for util/image-packed`, function() {
 				0x03, 0x01, 0x03, 0x01, 0x03, 0x01, 0x03, 0x01, 0x03, 0x01,
 			],
 			bitDepth: 2,
-			dims: { x: 10, y: 2 },
+			width: 10,
+			height: 2,
 			widthBits: 24,
 			isMSB: true,
 		}
@@ -339,7 +357,8 @@ describe(`Extra tests for util/image-packed`, function() {
 				0x03, 0x01, 0x03, 0x01, 0x03, 0x01, 0x03, 0x01, 0x03, 0x01, 0x03,
 			],
 			bitDepth: 2,
-			dims: { x: 11, y: 2 },
+			width: 11,
+			height: 2,
 			widthBits: 24,
 			isMSB: true,
 		}
@@ -357,7 +376,8 @@ describe(`Extra tests for util/image-packed`, function() {
 				0x03, 0x01, 0x03, 0x01, 0x03, 0x01, 0x03, 0x01, 0x03, 0x01, 0x03, 0x01, 0x03, 0x01, 0x03, 0x01, 0x03,
 			],
 			bitDepth: 2,
-			dims: { x: 17, y: 2 },
+			width: 17,
+			height: 2,
 			widthBits: 40,
 			isMSB: true,
 		}
@@ -379,7 +399,8 @@ describe(`Extra tests for util/image-packed`, function() {
 				0x03, 0x01, 0x03, 0x01, 0x03, 0x01, 0x03, 0x01, 0x03, 0x01, 0x03, 0x01, 0x03, 0x01, 0x03, 0x01, 0x03, 0x01, 0x03,
 			],
 			bitDepth: 2,
-			dims: { x: 19, y: 4 },
+			width: 19,
+			height: 4,
 			widthBits: 40,
 			isMSB: true,
 		}

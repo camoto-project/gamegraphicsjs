@@ -23,6 +23,7 @@ import TestUtil from './util.js';
 import {
 	all as gamegraphicsFormats,
 	Image,
+	Frame,
 	Palette,
 } from '../index.js';
 
@@ -101,12 +102,12 @@ function createStandardMask(width, height, hit) {
 	return pixels;
 }
 
-function createStandardPalette(transparentIndex)
+function createStandardPalette(transparentIndex, offset = 0)
 {
 	let pal = new Palette(256);
 	for (let i = 0; i < 256; i++) {
 		pal[i] = [
-			(i << 2) % 256,
+			((i << 2) + offset) % 256,
 			i >> 4,
 			i,
 			255,
@@ -154,14 +155,14 @@ for (const handler of gamegraphicsFormats) {
 
 		});
 
-		function testSize(dims, message) {
-			const sizename = dims.x + 'x' + dims.y;
+		function testSize(width, height, message) {
+			const sizename = width + 'x' + height;
 			describe(`should handle dimensions of ${sizename} (${message})`, function () {
 				// Not all format handlers use this, but those that do all use the
 				// same keys.
 				const options = {
-					width: dims.x,
-					height: dims.y,
+					width,
+					height,
 				};
 
 				// Load expected image data for these image dimensions
@@ -176,19 +177,29 @@ for (const handler of gamegraphicsFormats) {
 
 				// Read the image
 				describe('read()', function() {
-					let frames, image;
+					let image;
 					before('should read correctly', function() {
-						frames = handler.read(contentEncoded, options);
-						assert.notStrictEqual(frames, undefined);
-						assert.notStrictEqual(frames, null);
-						assert.notStrictEqual(frames.length, undefined);
-						assert.notStrictEqual(frames.length, 0);
-						image = frames[0];
+						image = handler.read(contentEncoded, options);
+						assert.notStrictEqual(image, undefined);
+						assert.notStrictEqual(image.frames, undefined);
+						assert.notStrictEqual(image.frames, null);
+						assert.notStrictEqual(image.frames.length, undefined);
 					});
 
 					it('should have the correct dimensions', function() {
-						assert.equal(image.dims.x, dims.x);
-						assert.equal(image.dims.y, dims.y);
+						if (md.limits.sizePerFrame) {
+							// Use just the first frame, but fall back to the image dimensions
+							// if the frame has none.
+							const f = 0;
+							const frameWidth = (image.frames[f].width === undefined) ? image.width : image.frames[f].width;
+							const frameHeight = (image.frames[f].height === undefined) ? image.height : image.frames[f].height;
+							assert.equal(frameWidth, width);
+							assert.equal(frameHeight, height);
+						} else {
+							// Use global image size.
+							assert.equal(image.width, width);
+							assert.equal(image.height, height);
+						}
 					});
 
 					if (md.limits.hasPalette) {
@@ -229,42 +240,79 @@ for (const handler of gamegraphicsFormats) {
 								}
 							}
 						});
+
+						if (md.limits.palettePerFrame) {
+							it(`should have a palette for each frame`, function() {
+								// TODO: Check each frame's palette
+								this.skip();
+							});
+						}
+
+					} else {
+						it(`should correctly report no palette`, function() {
+							assert.equal(md.limits.palettePerFrame, false,
+								'Cannot have palettes per frame if the format does not support '
+								+ 'palettes.');
+						});
 					}
 
 					it(`should have the correct pixel values`, function() {
-						assert.ok(frames.length >= md.limits.frameCount.min, `Image has ${frames.length} frames, but the minimum permitted is ${md.limits.frameCount.min}`);
-						assert.ok(frames.length <= md.limits.frameCount.max, `Image has ${frames.length} frames, but the maximum permitted is ${md.limits.frameCount.max}`);
-						for (let f = 0; f < frames.length; f++) {
-							const expectedPixels = createStandardImage(dims.x, dims.y, md.depth, f);
-							TestUtil.buffersEqual(expectedPixels, frames[f].pixels, `Frame ${f} has wrong pixel values`);
+						assert.ok(image.frames.length >= md.limits.frameCount.min,
+							`Image has ${image.frames.length} frames, but the minimum `
+							+ `permitted is ${md.limits.frameCount.min}`);
+						assert.ok(image.frames.length <= md.limits.frameCount.max,
+							`Image has ${image.frames.length} frames, but the maximum `
+							+ `permitted is ${md.limits.frameCount.max}`);
+						for (let f = 0; f < image.frames.length; f++) {
+							const expectedPixels = createStandardImage(width, height, md.depth, f);
+							TestUtil.buffersEqual(expectedPixels, image.frames[f].pixels,
+								`Frame ${f} has wrong pixel values`);
 						}
 					});
 				});
 
 				// Write the image
 				describe('write()', function() {
-					let frames = [];
+					let image;
 					before('generate standard image', function() {
 						const frameCount = Math.max(
 							md.limits.frameCount.min,
-							Math.min(4, md.limits.frameCount.max || 99)
+							Math.min(4, md.limits.frameCount.max)
 						);
-						const stdpal = md.limits.hasPalette ? createStandardPalette(md.limits.transparentIndex) : null;
+						let frames = [];
 						for (let f = 0; f < frameCount; f++) {
-							let image = new Image(
-								dims,
-								createStandardImage(dims.x, dims.y, md.depth, f),
-								stdpal,
-								undefined
-							);
-							assert.notStrictEqual(image, undefined);
-							assert.notStrictEqual(image, null);
-							frames.push(image);
+							let frame = new Frame({
+								width,
+								height,
+								pixels: createStandardImage(width, height, md.depth, f),
+								// Use a unique palette per frame if the format supports it.
+								palette: md.limits.palettePerFrame ? createStandardPalette(md.limits.transparentIndex, f) : null,
+							});
+							assert.notStrictEqual(frame, undefined);
+							assert.notStrictEqual(frame, null);
+							assert.notStrictEqual(frame.pixels, undefined);
+							frames.push(frame);
 						}
+						const imgpal = md.limits.hasPalette ? createStandardPalette(md.limits.transparentIndex) : null;
+						image = new Image({
+							width,
+							height,
+							frames,
+							palette: imgpal,
+						});
+					});
+
+					it('checkLimits() should not complain', function() {
+						for (let f = 0; f < image.frames.length; f++) {
+							assert.notStrictEqual(image.frames[f].pixels, undefined,
+								`BUG: Frame ${f} exists but has no pixel data.`);
+						}
+						const warnings = handler.checkLimits(image);
+						assert.ok(warnings.length === 0);
 					});
 
 					it('should write correctly', function() {
-						const { content: contentGenerated } = handler.write(frames, options);
+						const { content: contentGenerated } = handler.write(image, options);
 
 						TestUtil.contentEqual(contentEncoded, contentGenerated);
 					});
@@ -302,13 +350,13 @@ for (const handler of gamegraphicsFormats) {
 			y: (md.limits.maximumSize.y === undefined) ? 1024 : md.limits.maximumSize.y,
 		};
 
-		testSize(md.limits.minimumSize, 'Minimum permitted size');
+		testSize(md.limits.minimumSize.x, md.limits.minimumSize.y, 'Minimum permitted size');
 
 		if (
 			(md.limits.maximumSize.x > md.limits.minimumSize.x)
 			|| (md.limits.maximumSize.y > md.limits.minimumSize.y)
 		) {
-			testSize(maxDims, 'Maximum permitted size');
+			testSize(maxDims.x, maxDims.y, 'Maximum permitted size');
 		}
 
 		[
@@ -334,7 +382,7 @@ for (const handler of gamegraphicsFormats) {
 				&& (md.limits.multipleSize.x && (testDims.x % md.limits.multipleSize.x === 0))
 				&& (md.limits.multipleSize.y && (testDims.y % md.limits.multipleSize.y === 0))
 			) {
-				testSize(testDims, 'Standard test');
+				testSize(testDims.x, testDims.y, 'Standard test');
 			}
 		});
 

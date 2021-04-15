@@ -18,7 +18,7 @@
  */
 
 import TestUtil from './util.js';
-import { img_png as handler, Image, defaultPalette } from '../index.js';
+import { img_png as handler, Frame, Image, defaultPalette } from '../index.js';
 
 const md = handler.metadata();
 let testutil = new TestUtil(md.id);
@@ -31,7 +31,16 @@ function genImage(depth)
 		pixels[i] = i % pixelCutoff;
 	}
 
-	return new Image({x: 16, y: 16}, pixels, defaultPalette(depth));
+	return new Image({
+		width: 16,
+		height: 16,
+		frames: [
+			new Frame({
+				pixels,
+			}),
+		],
+		palette: defaultPalette(depth),
+	});
 }
 
 describe(`Extra tests for ${md.title} [${md.id}]`, function() {
@@ -53,7 +62,7 @@ describe(`Extra tests for ${md.title} [${md.id}]`, function() {
 			for (const depth of [1, 2, 4, 8]) {
 				it(`should handle ${depth}-bit images`, function() {
 					const img = genImage(depth);
-					const { content: contentGenerated } = handler.write([img]);
+					const { content: contentGenerated } = handler.write(img);
 					TestUtil.contentEqual(content[`16x16c${1 << depth}`], contentGenerated);
 				});
 			}

@@ -1,5 +1,5 @@
 /*
- * Compose an image from overlaying multiple other images.
+ * Compose a frame by overlaying multiple other frames.
  *
  * Copyright (C) 2010-2021 Adam Nielsen <malvineous@shikadi.net>
  *
@@ -18,32 +18,30 @@
  */
 
 import Debug from '../util/debug.js';
-const debug = Debug.extend('image-compose');
+const debug = Debug.extend('frame-compose');
 
-import Image from '../interface/image.js';
+import Frame from '../interface/frame.js';
 
 /**
  * Draw a selection of images onto a transparent canvas.
  *
  * @param {Array<Object>} composition
- *   List of images to draw.  An array of:
+ *   List of frames to draw.  An array of:
  *   {
- *     frame: Image instance,
- *     pos: {
- *       x: Horizontal coordinate to draw image,
- *       y: Vertical coordinate to draw image,
- *     },
+ *     frame: Frame instance,
+ *     offsetX: Horizontal coordinate to draw image,
+ *     offsetY: Vertical coordinate to draw image,
  *   }
- *   Images are drawn from (0,0), i.e. the hotspot is ignored.
+ *   Frames are drawn from (0,0), i.e. the hotspot is ignored.
  *
- * @return Image.
+ * @return Frame.
  */
-export function imageCompose(composition)
+export function frameCompose(composition)
 {
 	let width = 0, height = 0;
 	for (const c of composition) {
-		const cx = c.pos.x + c.frame.dims.x;
-		const cy = c.pos.y + c.frame.dims.y;
+		const cx = c.offsetX + c.frame.width;
+		const cy = c.offsetY + c.frame.height;
 		width = Math.max(width, cx);
 		height = Math.max(height, cy);
 	}
@@ -68,13 +66,13 @@ export function imageCompose(composition)
 	let pixels = new Uint8Array(width * height).fill(bg);
 
 	for (const c of composition) {
-		for (let y = 0; y < c.frame.dims.y; y++) {
-			const offSrc = y * c.frame.dims.x;
-			const offDst = (c.pos.y + y) * width + c.pos.x;
+		for (let y = 0; y < c.frame.height; y++) {
+			const offSrc = y * c.frame.width;
+			const offDst = (c.offsetY + y) * width + c.offsetX;
 			const bufSrc = new Uint8Array(
 				c.frame.pixels.buffer,
 				c.frame.pixels.byteOffset + offSrc,
-				c.frame.dims.x
+				c.frame.width
 			);
 			// Copy pixel data over the top, overwriting opaque pixels with
 			// transparent ones.
@@ -83,9 +81,10 @@ export function imageCompose(composition)
 		}
 	}
 
-	return new Image(
-		{ x: width, y: height },
+	return new Frame({
+		width,
+		height,
 		pixels,
 		palette,
-	);
+	});
 }

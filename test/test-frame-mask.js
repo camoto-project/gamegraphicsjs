@@ -19,53 +19,56 @@
 
 import assert from 'assert';
 import TestUtil from './util.js';
-import Image from '../interface/image.js';
-import { imageFromMask, maskFromImage } from '../util/image-mask.js';
+import Frame from '../interface/frame.js';
+import { frameFromMask, maskFromFrame } from '../util/frame-mask.js';
 
 function runTest(msg, { pixelsVisible, pixelsMask, fnFromMask, pixelsCombined, fnToMask }) {
 	describe(msg, function() {
 
-		const imgVisible = new Image(
-			{x: pixelsVisible.length, y: 1},
-			Uint8Array.from(pixelsVisible)
-		);
-		const imgMask = new Image(
-			{x: pixelsMask.length, y: 1},
-			Uint8Array.from(pixelsMask)
-		);
-		const imgCombined = new Image(
-			{x: pixelsCombined.length, y: 1},
-			Uint8Array.from(pixelsCombined)
-		);
+		const frVisible = new Frame({
+			width: pixelsVisible.length,
+			height: 1,
+			pixels: Uint8Array.from(pixelsVisible),
+		});
+		const frMask = new Frame({
+			width: pixelsMask.length,
+			height: 1,
+			pixels: Uint8Array.from(pixelsMask),
+		});
+		const frCombined = new Frame({
+			width: pixelsCombined.length,
+			height: 1,
+			pixels: Uint8Array.from(pixelsCombined),
+		});
 
-		it('imageFromMask()', function() {
-			const actual = imageFromMask({
-				imgVisible,
-				imgMask,
+		it('frameFromMask()', function() {
+			const actual = frameFromMask({
+				frVisible,
+				frMask,
 				cb: fnFromMask,
 			});
 			TestUtil.buffersEqual(pixelsCombined, actual.pixels);
-			assert.equal(imgVisible.dims.x, actual.dims.x);
-			assert.equal(imgVisible.dims.y, actual.dims.y);
+			assert.equal(frVisible.width, actual.width);
+			assert.equal(frVisible.height, actual.height);
 		});
 
-		it('maskFromImage()', function() {
-			const { imgVisible: actualVisible, imgMask: actualMask } = maskFromImage({
-				img: imgCombined,
+		it('maskFromFrame()', function() {
+			const { frVisible: actualVisible, frMask: actualMask } = maskFromFrame({
+				frame: frCombined,
 				cb: fnToMask,
 			});
 			TestUtil.buffersEqual(pixelsVisible, actualVisible.pixels);
 			TestUtil.buffersEqual(pixelsMask, actualMask.pixels);
-			assert.equal(imgCombined.dims.x, actualVisible.dims.x);
-			assert.equal(imgCombined.dims.y, actualVisible.dims.y);
-			assert.equal(imgCombined.dims.x, actualMask.dims.x);
-			assert.equal(imgCombined.dims.y, actualMask.dims.y);
+			assert.equal(frCombined.width, actualVisible.width);
+			assert.equal(frCombined.height, actualVisible.height);
+			assert.equal(frCombined.width, actualMask.width);
+			assert.equal(frCombined.height, actualMask.height);
 		});
 
 	});
 }
 
-describe(`Tests for util/image-mask`, function() {
+describe(`Tests for util/frame-mask`, function() {
 	runTest(
 		`should handle simple mask`,
 		{
