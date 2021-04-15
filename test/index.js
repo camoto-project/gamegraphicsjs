@@ -193,12 +193,12 @@ for (const handler of gamegraphicsFormats) {
 							const f = 0;
 							const frameWidth = (image.frames[f].width === undefined) ? image.width : image.frames[f].width;
 							const frameHeight = (image.frames[f].height === undefined) ? image.height : image.frames[f].height;
-							assert.equal(frameWidth, width);
-							assert.equal(frameHeight, height);
+							assert.equal(frameWidth, width, 'Wrong width');
+							assert.equal(frameHeight, height, 'Wrong height');
 						} else {
 							// Use global image size.
-							assert.equal(image.width, width);
-							assert.equal(image.height, height);
+							assert.equal(image.width, width, 'Wrong width');
+							assert.equal(image.height, height, 'Wrong height');
 						}
 					});
 

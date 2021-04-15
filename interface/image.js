@@ -54,7 +54,7 @@ export default class Image
 	 *   titles, artist names, and other metadata.  Each format handler supplies
 	 *   a list of tags it can read and write.
 	 */
-	constructor(params) {
+	constructor(params = {}) {
 		this.width = params.width || 0;
 		this.height = params.height || 0;
 		this.frames = params.frames || [];

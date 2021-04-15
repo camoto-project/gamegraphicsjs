@@ -118,7 +118,7 @@ class Operations
 
 	readpal(params) {
 		const { image, origFormat } = this.readFile(params);
-		const palNew = image[0].palette;
+		const palNew = image.palette;
 		if (!palNew) {
 			throw new OperationsError('readpal: This file does not supply a palette.');
 		}
@@ -236,17 +236,28 @@ class Operations
 	}
 
 	info() {
-		if (this.image instanceof Image) {
-			console.log('Type: Single image');
+		if (this.image.frames.length === 0) {
+			if (this.image.palette) {
+				console.log('Type: Palette');
+			} else {
+				console.log('Type: Unknown (no frames or a palette)');
+			}
 
-		} else if (this.image instanceof Array) {
+		} else if (this.image.frames.length === 1) {
+			console.log('Type: Single image');
+			const frameWidth = (this.image.frames[0].width === undefined) ? this.image.width : this.image.frames[0].width;
+			const frameHeight = (this.image.frames[0].height === undefined) ? this.image.height : this.image.frames[0].height;
+			console.log(`Size: ${frameWidth}x${frameHeight}`);
+
+		} else {
 			// Run through the images and see if any have an animation delay set.
-			const imgWithDelay = this.image.find(i => i.postDelay !== undefined);
+			const imgWithDelay = this.image.frames.find(i => i.postDelay !== undefined);
 			if (imgWithDelay) {
 				console.log('Type: Image list (animation)');
+				console.log(`Number of frames: ${this.image.frames.length}`);
 			} else {
 				console.log('Type: Image list (tileset)');
-				console.log(`Number of top-level images: ${this.image.length}`);
+				console.log(`Number of top-level images: ${this.image.frames.length}`);
 				const fnCount = i => {
 					let n = i.length;
 					for (const j of i) {
@@ -256,7 +267,7 @@ class Operations
 					}
 					return n;
 				};
-				const totalImages = fnCount(this.image);
+				const totalImages = fnCount(this.image.frames);
 				console.log(`Total number of images: ${totalImages}`);
 
 				const fnList = (img, prefix = '') => {
@@ -265,16 +276,13 @@ class Operations
 						if (j instanceof Array) {
 							fnList(j, `${prefix}${i}.`);
 						} else {
-							console.log(`${prefix}${i}: ${j.dims.x}x${j.dims.y}`);
+							console.log(`${prefix}${i}: ${j.width}x${j.height}`);
 						}
 					}
 				};
-				fnList(this.image);
+				fnList(this.image.frames);
 			}
-
-		} else {
-			console.log('Type: Unknown');
-		}
+		} // if (image has multiple frames)
 	}
 
 	select(params) {

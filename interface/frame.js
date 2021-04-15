@@ -72,8 +72,8 @@ export default class Frame
 	 *   animations.
 	 */
 	constructor(params) {
-		this.width = params.width || 0;
-		this.height = params.height || 0;
+		this.width = params.width || undefined;
+		this.height = params.height || undefined;
 		this.pixels = params.pixels || new Uint8Array(this.width * this.height);
 		this.palette = params.palette || undefined;
 		this.hotspotX = params.hotspotX || undefined;
