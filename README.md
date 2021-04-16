@@ -107,7 +107,11 @@ You're ready to go!  To add a new file format:
  1. Create a new file in the `formats` folder for your format.  Copying an
     existing file that covers a similar format will help considerably.  If
     you're not sure, `images/img-raw-vga.js` is a good starting point as it is
-    fairly simple.
+    fairly simple.  The files that start with `img` are for formats that only
+    support a single picture in each file, while files starting with `tls`
+    (short for tileset) support multiple pictures ("frames") in each file.
+    Files that start with `anm` are the same as `tls` but each frame is part
+    of an animation sequence rather than separate images.
     
  2. Edit `formats/index.js` and add an `import` statement for your new file.
     
