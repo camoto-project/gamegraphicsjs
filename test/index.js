@@ -35,6 +35,19 @@ const skipTests = [
 	'tls-ddave-vga', // first tiles are fixed at 16x16, rest are variable
 ];
 
+// List which handlers can't help but misdetect other files.
+const skipIdentify = {
+	'img-raw-linear-8bpp': [
+		'img-raw-planar-4bpp',
+	],
+	'img-raw-planar-4bpp': [
+		'img-raw-linear-8bpp',
+	],
+	'tls-cosmo': [
+		'img-raw-planar-4bpp',
+	],
+};
+
 // Override the default colours so we can actually see them
 import { colors } from 'mocha/lib/reporters/base.js';
 colors['diff added'] = '1;33';
@@ -328,14 +341,18 @@ for (const handler of gamegraphicsFormats) {
 						);
 					});
 
+					const skipFormats = skipIdentify[md.id] || [];
 					for (const subhandler of gamegraphicsFormats) {
 						const submd = subhandler.metadata();
 
 						// Skip ourselves
-						if (submd.id === md.id) return;
+						if (submd.id === md.id) continue;
+
+						// Skip files listed in gameFiles[].skip.
+						if (skipFormats.includes(submd.id)) continue;
 
 						it(`should not positively identify ${submd.id} files`, function() {
-							const result = subhandler.identify(contentEncoded, contentEncoded.main.filename, options);
+							const result = subhandler.identify(contentEncoded.main, contentEncoded.main.filename, options);
 							assert.notEqual(result.valid, true);
 						});
 					}
