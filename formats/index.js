@@ -20,6 +20,7 @@
 export { default as img_png } from './img-png.js';
 export { default as img_raw_linear_8bpp } from './img-raw-linear-8bpp.js';
 export { default as img_raw_planar_4bpp } from './img-raw-planar-4bpp.js';
+export { default as img_ccomic_splash } from './img-ccomic-splash.js';
 
 export { default as pal_vga_6bit } from './pal-vga-6bit.js';
 export { default as pal_vga_8bit } from './pal-vga-8bit.js';

@@ -27,6 +27,11 @@ import TestUtil from './util.js';
 import { all as allFormats } from '../index.js';
 
 const gameFiles = {
+	'img-ccomic-splash': {
+		'sys000.ega': [
+			'PBD6NdDg3YQ96S9KvYVZHw89B8k=',
+		],
+	},
 	'img-raw-linear-8bpp': {
 		'unlogic1.gra': [
 			'FIwTzEYTeDXeLfxWIsztlvAqoNE=',

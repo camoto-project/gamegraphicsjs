@@ -23,6 +23,7 @@ read and write the image.
 
 | Game                      | Types                  | Code                    |
 |---------------------------|------------------------|-------------------------|
+| Captain Comic             | Splash                 | img-ccomic-splash       |
 | Captain Comic             | Sprites                | tls-ccomic-sprite       |
 | Captain Comic             | Map tiles              | tls-ccomic-map          |
 | Cosmo's Cosmic Adventures | Full-screen images     | img-raw-planar-4bpp     |

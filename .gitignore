@@ -1,4 +1,5 @@
 node_modules/
+test/img-ccomic-splash/sys000.ega
 test/img-raw-linear-8bpp/unlogic1.*
 test/img-raw-planar-4bpp/onemomnt.mni
 test/tls-ccomic-map/castle.tt2
