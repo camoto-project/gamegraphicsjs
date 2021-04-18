@@ -67,12 +67,25 @@ export default class Image
 	/**
 	 * Return a new image identical to the original, but with a duplicated buffer
 	 * so that changes to the copy do not affect the original.
+	 *
+	 * @param {Number} start
+	 *   First frame to copy, defaults to 0.
+	 *
+	 * @param {Number} count
+	 *   Number of frames to copy, defaults to all.
 	 */
-	clone() {
+	clone(start = 0, count = this.frames.length) {
+		let selectedFrames = [];
+		for (let f = start; f < Math.min(start + count, this.frames.length); f++) {
+			selectedFrames.push(
+				this.frames[f].clone()
+			);
+		}
+
 		return new Image({
 			width: this.width,
 			height: this.height,
-			frames: this.frames.map(f => f.clone()),
+			frames: selectedFrames,
 			palette: this.palette && this.palette.clone(),
 			hotspotX: this.hotspotX,
 			hotspotY: this.hotspotY,
