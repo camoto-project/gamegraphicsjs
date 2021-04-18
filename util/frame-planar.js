@@ -35,6 +35,13 @@ import { pad_generic } from '@camoto/gamecomp';
  *   next plane after every 8 pixels), set to image width in pixels for
  *   row-planar data (switch to next plane after each row).
  *
+ * @param {Number} lineWidth
+ *   Actual line width in pixels.  Used to drop padding pixels added when
+ *   rounding the image width up to a multiple of 8.  Since this is only used
+ *   for calculating padding pixels, only values 0..7 are used (so if a value of
+ *   25 is given, it is treated as `25 % 8 = 1` and works the same as if `1`
+ *   had been given.
+ *
  * @param {Array<Number>} planeValues
  *   Output value for each plane, e.g. `[1, 2, 4, 8]` for BGRI plane order, or
  *   `[16, 8, 4, 2, 1]` for MIRGB plane order.  Number of entries must match

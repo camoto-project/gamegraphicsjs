@@ -76,34 +76,52 @@ export default class Tileset_Cosmo extends ImageHandler
 	}
 
 	static read(content) {
-		const frame = new Frame({
-			pixels: fromPlanar({
-				content: content.main,
-				planeCount: 4,
-				planeWidth: 8,
-				lineWidth: 8,
-				planeValues: [1, 2, 4, 8],
-				byteOrderMSB: true,
-			}),
+		const pixels = fromPlanar({
+			content: content.main,
+			planeCount: 4,
+			planeWidth: 8,
+			lineWidth: 8,
+			planeValues: [1, 2, 4, 8],
+			byteOrderMSB: true,
 		});
 
-		return new Image({
+		let img = new Image({
 			width: 8,
-			height: (8 * content.main.length / BYTES_PER_TILE) >>> 0,
-			frames: [frame],
+			height: 8,
+			frames: [],
 			palette: paletteCGA16(),
 		});
+
+		const pixelsPerTile = img.width * img.height;
+		const numTiles = pixels.length / pixelsPerTile;
+		for (let f = 0; f < numTiles; f++) {
+			img.frames.push(new Frame({
+				pixels: pixels.slice(f * pixelsPerTile, (f + 1) * pixelsPerTile),
+			}));
+		}
+
+		return img;
 	}
 
 	static write(image) {
-		if (image.frames.length !== 1) {
-			throw new Error(`Can only write one frame to this format.`);
+		let pixelCount = 0;
+		for (const f of image.frames) {
+			const frameWidth = f.width || image.width;
+			const frameHeight = f.height || image.height;
+			pixelCount += frameWidth * frameHeight;
+		}
+		let pixels = new Uint8Array(pixelCount);
+
+		let offDst = 0;
+		for (const f of image.frames) {
+			pixels.set(f.pixels, offDst);
+			offDst += f.pixels.length;
 		}
 
 		return {
 			content: {
 				main: toPlanar({
-					content: image.frames[0].pixels,
+					content: pixels,
 					planeCount: 4,
 					planeWidth: 8,
 					lineWidth: 8,

@@ -17,7 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import Image from '../interface/image.js';
 import Frame from '../interface/frame.js';
 import { frameCompose } from './frame-compose.js';
 
@@ -56,26 +55,31 @@ export function frameFromTileset(image, width)
 		yMax = Math.max(yMax, frameHeight);
 	}
 
-	return frameCompose(frameList);
+	return frameCompose(frameList, {
+		defaultWidth: image.width,
+		defaultHeight: image.height,
+	});
 }
 
 /**
  * Split a frame into multiple smaller frames, all the same size.
  * Undoes the effect of imageFromTileset().
  */
-export function tilesetFromFrame(frame, originalImage, bg = 0)
+export function tilesetFromFrame({ frame, frameWidth, tileDims, bg })
 {
 	if (!(frame instanceof Frame)) {
 		throw new Error(`Bad parameter: tilesetFromFrame() expects Frame instance `
-			+ `as first parameter, got ${typeof frame}.`);
+			+ `as 'frame' parameter, got ${typeof frame}.`);
 	}
 
-	let tiles = [], tx = 0, ty = 0, yMax = 0;
-	for (let f = 0; f < originalImage.frames.length; f++) {
-		const tileWidth = (originalImage.frames[f].width === undefined) ? originalImage.width : originalImage.frames[f].width;
-		const tileHeight = (originalImage.frames[f].height === undefined) ? originalImage.height : originalImage.frames[f].height;
+	const srcFrameWidth = frame.width || frameWidth;
 
-		if (tx + tileWidth > frame.width) {
+	let tiles = [], tx = 0, ty = 0, yMax = 0;
+	for (let f = 0; f < tileDims.length; f++) {
+		const tileWidth = tileDims[f].width;
+		const tileHeight = tileDims[f].height;
+
+		if (tx + tileWidth > srcFrameWidth) {
 			// Wrap to the next line.
 			ty += yMax;
 			yMax = 0;
@@ -83,11 +87,11 @@ export function tilesetFromFrame(frame, originalImage, bg = 0)
 		}
 
 		let pixels = new Uint8Array(tileWidth * tileHeight);
-		pixels.fill(bg);
+		pixels.fill(bg || 0);
 
 		// Copy all the rows for this tile.
 		for (let y = 0; y < tileHeight; y++) {
-			const offSrc = (ty + y) * frame.width + tx;
+			const offSrc = (ty + y) * srcFrameWidth + tx;
 			const offDst = y * tileWidth;
 			if (frame.pixels.byteOffset + offSrc + tileWidth > frame.pixels.length) {
 				throw new Error(`Pixel data for tile ${f} row ${y} runs past the end of the source image.`);
@@ -110,8 +114,5 @@ export function tilesetFromFrame(frame, originalImage, bg = 0)
 		yMax = Math.max(yMax, tileHeight);
 	}
 
-	return new Image({
-		frames: tiles,
-		palette: frame.palette,
-	});
+	return tiles;
 }

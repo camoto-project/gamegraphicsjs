@@ -54,7 +54,8 @@ const gameFiles = {
 	},
 	'tls-cosmo': {
 		'tiles.mni': [
-			'3KytfIvfaf9ggBAkdGIqiA7dxQU=',
+			'yNfQ7w7t+oLS6hqlkoRbmm1LArc=',
+			'8/GrwH6nkDUBajFLlk9uBfHpOKU=',
 		],
 	},
 	'tls-ddave-cga': {

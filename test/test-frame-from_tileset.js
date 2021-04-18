@@ -55,22 +55,27 @@ function runTest(msg, { tiles, image: srcimage, width, bg }) {
 		});
 
 		it('tilesetFromFrame()', function() {
-			const actual = tilesetFromFrame(
-				new Frame({
+			const tileDims = imgTiles.frames.map(f => ({
+				width: f.width,
+				height: f.height,
+			}));
+			const actual = tilesetFromFrame({
+				frame: new Frame({
 					width: srcimage.width,
 					height: srcimage.height,
 					pixels: Uint8Array.from(srcimage.pixels),
 				}),
-				imgTiles,
+				frameWidth: srcimage.width,
+				tileDims,
 				bg,
-			);
+			});
 
 			for (let i = 0; i < tiles.length; i++) {
-				TestUtil.buffersEqual(imgTiles.frames[i].pixels, actual.frames[i].pixels);
-				assert.equal(imgTiles.frames[i].width, actual.frames[i].width);
-				assert.equal(imgTiles.frames[i].height, actual.frames[i].height);
+				TestUtil.buffersEqual(imgTiles.frames[i].pixels, actual[i].pixels);
+				assert.equal(imgTiles.frames[i].width, actual[i].width);
+				assert.equal(imgTiles.frames[i].height, actual[i].height);
 			}
-			assert.equal(imgTiles.frames.length, actual.frames.length);
+			assert.equal(imgTiles.frames.length, actual.length);
 		});
 
 	});
