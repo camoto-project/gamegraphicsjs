@@ -324,8 +324,29 @@ for (const handler of gamegraphicsFormats) {
 						assert.ok(warnings.length === 0);
 					});
 
-					it('should write correctly', function() {
-						const { content: contentGenerated } = handler.write(image, options);
+					it('should write correctly using image dims', function() {
+						// Zero out the frame dimensions to force the image dimensions to
+						// be used.
+						let img2 = image.clone();
+						for (const f of img2.frames) {
+							f.width = undefined;
+							f.height = undefined;
+						}
+						const { content: contentGenerated } = handler.write(img2, options);
+
+						TestUtil.contentEqual(contentEncoded, contentGenerated);
+					});
+
+					it('should write correctly using frame dims', function() {
+						// Move the dimensions from the main image onto the frame instead.
+						// The format handler should use the frame dimensions in preference
+						// to the image dimensions, if present.
+						let img2 = image.clone();
+						// Set to zero rather than undefined as any value is supposed to be
+						// ignored if the frame dims are present.
+						img2.width = 0;
+						img2.height = 0;
+						const { content: contentGenerated } = handler.write(img2, options);
 
 						TestUtil.contentEqual(contentEncoded, contentGenerated);
 					});

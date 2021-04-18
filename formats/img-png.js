@@ -105,9 +105,13 @@ export default class Image_PNG extends ImageHandler
 			throw new Error(`Can only write one frame to this format.`);
 		}
 
+		const frame = image.frames[0];
+		const frameWidth = (frame.width === undefined) ? image.width : frame.width;
+		const frameHeight = (frame.height === undefined) ? image.height : frame.height;
+
 		let png = new PNG();
-		png.width = image.width;
-		png.height = image.height;
+		png.width = frameWidth;
+		png.height = frameHeight;
 		png.data = image.frames[0].pixels;
 
 		let maxPixel = 0;

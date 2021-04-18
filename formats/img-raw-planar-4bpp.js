@@ -106,7 +106,11 @@ export default class Image_Raw_4bpp_Planar extends ImageHandler
 			throw new Error(`Can only write one frame to this format.`);
 		}
 
-		if (image.width % 8) {
+		const frame = image.frames[0];
+		const frameWidth = (frame.width === undefined) ? image.width : frame.width;
+		const frameHeight = (frame.height === undefined) ? image.height : frame.height;
+
+		if (frameWidth % 8) {
 			throw new Error(`BUG: Image width must be a multiple of 8 (limits.multipleSize ignored).`);
 		}
 
@@ -115,7 +119,7 @@ export default class Image_Raw_4bpp_Planar extends ImageHandler
 				main: toPlanar({
 					content: image.frames[0].pixels,
 					planeCount: planeCount,
-					planeWidth: image.width * image.height,
+					planeWidth: frameWidth * frameHeight,
 					planeValues: [1, 2, 4, 8],
 					byteOrderMSB: true,
 				}),
