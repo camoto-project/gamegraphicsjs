@@ -80,7 +80,6 @@ export default class Frame
 		this.hotspotY = params.hotspotY || undefined;
 		this.offsetX = params.offsetX || 0;
 		this.offsetY = params.offsetY || 0;
-		this.postDelay = params.postDelay || undefined;
 	}
 
 	/**
@@ -97,7 +96,6 @@ export default class Frame
 			hotspotY: this.hotspotY,
 			offsetX: this.offsetX,
 			offsetY: this.offsetY,
-			postDelay: this.postDelay,
 		});
 	}
 }

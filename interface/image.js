@@ -53,6 +53,13 @@ export default class Image
 	 *   Additional generic information to expose as key/value data, such as
 	 *   titles, artist names, and other metadata.  Each format handler supplies
 	 *   a list of tags it can read and write.
+	 *
+	 * @param {Array} animation
+	 *   Array of objects containing the following properties:
+	 *     - index: Zero-based index of the frame to show at this point in the
+	 *       cycle.  This allows frames to be used multiple times in a sequence.
+	 *     - postDelay: Number of milliseconds to pause after showing this frame,
+	 *       before advancing to the next.
 	 */
 	constructor(params = {}) {
 		this.width = params.width || 0;
@@ -62,6 +69,7 @@ export default class Image
 		this.hotspotX = params.hotspotX || undefined;
 		this.hotspotY = params.hotspotY || undefined;
 		this.tags = params.tags || {};
+		this.animation = params.animation || [];
 	}
 
 	/**
@@ -90,6 +98,7 @@ export default class Image
 			hotspotX: this.hotspotX,
 			hotspotY: this.hotspotY,
 			tags: { ...this.tags },
+			animation: [ ...this.animation ], // TODO: ensure deep copy
 		});
 	}
 }
