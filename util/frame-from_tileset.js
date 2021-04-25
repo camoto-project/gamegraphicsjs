@@ -30,9 +30,13 @@ import { frameCompose } from './frame-compose.js';
  * @param {Number} width
  *   Number of tiles to draw horizontally before moving to the next row.
  *
+ * @param {Number} bg
+ *   Fallback background colour to use if a transparent palette entry cannot be
+ *   found.
+ *
  * @return Image.
  */
-export function frameFromTileset(image, width)
+export function frameFromTileset(image, width, bg)
 {
 	let frameList = [], x = 0, y = 0, yMax = 0;
 	for (let f = 0; f < image.frames.length; f++) {
@@ -58,6 +62,8 @@ export function frameFromTileset(image, width)
 	return frameCompose(frameList, {
 		defaultWidth: image.width,
 		defaultHeight: image.height,
+		bg: bg,
+		palette: image.palette,
 	});
 }
 

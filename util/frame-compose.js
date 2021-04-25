@@ -40,6 +40,15 @@ import Frame from '../interface/frame.js';
  *
  *   options.defaultHeight is the same as defaultWidth but for height.
  *
+ *   options.bg is the default background colour to use, for any pixels that
+ *   don't get written over by the composition.  Defaults to the first
+ *   transparent colour in the palette, or entry 0 if no transparent entries
+ *   were found.
+ *
+ *   options.palette optional palette.  If specified, it is searched for a
+ *   transparent entry and if one is found, it replaces `options.bg`.  To
+ *   always respect `options.bg`, omit this value.
+ *
  * @return Frame.
  */
 export function frameCompose(composition, options)
@@ -53,15 +62,16 @@ export function frameCompose(composition, options)
 	}
 	debug(`Final size: (${width},${height})`);
 
-	let bg = 0;
 	const palette = composition[0].frame.palette;
-	if (palette) {
-		for (let i = 0; i < palette.length; i++) {
-			if ((palette[i] === undefined) || (palette[i][3] === undefined)) {
+
+	let bg = options.bg || 0;
+	if (options.palette) {
+		for (let i = 0; i < options.palette.length; i++) {
+			if ((options.palette[i] === undefined) || (options.palette[i][3] === undefined)) {
 				debug(`Palette entry ${i} is invalid.`);
 				throw new Error(`Palette entry ${i} is invalid.`);
 			}
-			if (palette[i][3] === 0) {
+			if (options.palette[i][3] === 0) {
 				// Found a transparent colour, use that for the background.
 				bg = i;
 				break;
@@ -93,6 +103,5 @@ export function frameCompose(composition, options)
 		width,
 		height,
 		pixels,
-		palette,
 	});
 }
