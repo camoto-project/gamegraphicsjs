@@ -57,8 +57,8 @@ export function frameFromMask({frVisible, frMask, cb})
  * Convert an image with transparent pixels into two frames, one with visible
  * pixels and one with a monochrome transparency mask.
  *
- * @param {Image} img
- *   Image to read.
+ * @param {Frame} frame
+ *   Frame to read.
  *
  * @param {Function} cb
  *   Callback to process each pixel.  Function signature is:

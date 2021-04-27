@@ -62,8 +62,6 @@ export function frameCompose(composition, options)
 	}
 	debug(`Final size: (${width},${height})`);
 
-	const palette = composition[0].frame.palette;
-
 	let bg = options.bg || 0;
 	if (options.palette) {
 		for (let i = 0; i < options.palette.length; i++) {
