@@ -92,9 +92,11 @@ export default class Palette_VGA_8bit extends ImageHandler
 	}
 
 	static read(content) {
-		let palette = new Palette(256);
+		const count = Math.min(256, (content.length / 3) >>> 0);
 
-		for (let i = 0, p = 0; i < 256; i++) {
+		let palette = new Palette(count);
+
+		for (let i = 0, p = 0; i < count; i++) {
 			palette[i] = [
 				content.main[p++],
 				content.main[p++],
@@ -124,8 +126,9 @@ export default class Palette_VGA_8bit extends ImageHandler
 				+ `format.`);
 		}
 
-		let content = new Uint8Array(256 * 3);
-		for (let i = 0; i < Math.min(palette.length, 256); i++) {
+		const count = Math.min(palette.length, 256);
+		let content = new Uint8Array(count * 3);
+		for (let i = 0; i < count; i++) {
 			for (let c = 0; c < 3; c++) {
 				content[i * 3 + c] = palette[i][c];
 			}
