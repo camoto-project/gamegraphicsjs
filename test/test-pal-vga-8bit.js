@@ -17,6 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import assert from 'assert';
 import TestUtil from './util.js';
 import { pal_vga_8bit as handler, Image, defaultPalette } from '../index.js';
 
@@ -42,6 +43,31 @@ describe(`Extra tests for ${md.title} [${md.id}]`, function() {
 
 			for (const depth of [1, 2, 4, 6, 8]) {
 				it(`should handle ${depth}-bit images`, function() {
+					const palExpected = defaultPalette(depth);
+
+					const img = handler.read(content[`pal${1 << depth}`]);
+					assert.ok(img.palette, 'Palette missing.');
+					assert.ok(img.palette.length > 0, `Got an empty palette (${img.palette.length} entries).`);
+
+					const numEntries = Math.max(img.palette.length, palExpected.length);
+					for (let p = 0; p < numEntries; p++) {
+						for (let c = 0; c < 3; c++) {
+							assert.equal(
+								palExpected[p][c],
+								img.palette[p][c],
+								`Palette entry ${p} subcomponent ${c} did not match.`
+							);
+						}
+					}
+				});
+			}
+
+		}); // read()
+
+		describe('write()', function() {
+
+			for (const depth of [1, 2, 4, 6, 8]) {
+				it(`should handle ${depth}-bit images`, function() {
 					const img = new Image({
 						palette: defaultPalette(depth),
 					});
@@ -50,7 +76,7 @@ describe(`Extra tests for ${md.title} [${md.id}]`, function() {
 				});
 			}
 
-		}); // read()
+		}); // write()
 
 	}); // I/O
 

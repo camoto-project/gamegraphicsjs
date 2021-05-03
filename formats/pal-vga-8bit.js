@@ -92,7 +92,7 @@ export default class Palette_VGA_8bit extends ImageHandler
 	}
 
 	static read(content) {
-		const count = Math.min(256, (content.length / 3) >>> 0);
+		const count = Math.min(256, (content.main.length / 3) >>> 0);
 
 		let palette = new Palette(count);
 
