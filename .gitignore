@@ -4,8 +4,11 @@ test/img-raw-linear-8bpp/unlogic1.*
 test/img-raw-planar-4bpp/onemomnt.mni
 test/tls-ccomic-map/castle.tt2
 test/tls-ccomic-sprite/bird.shp
+test/tls-cosmo-actrinfo/actors.mni
+test/tls-cosmo-actrinfo/actrinfo.mni
+test/tls-cosmo-masked/masktile.mni
 test/tls-cosmo/tiles.mni
 test/tls-ddave-cga/cgadave.dav
 test/tls-ddave-ega/egadave.dav
-test/tls-ddave-vga/vgadave.dav
 test/tls-ddave-vga/vga.pal
+test/tls-ddave-vga/vgadave.dav

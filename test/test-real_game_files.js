@@ -58,6 +58,16 @@ const gameFiles = {
 			'8/GrwH6nkDUBajFLlk9uBfHpOKU=',
 		],
 	},
+	'tls-cosmo-masked': {
+		'masktile.mni': [
+			'BAGqWFyVT5tYhtR1GrbbCjFvi1c=',
+		],
+	},
+	'tls-cosmo-actrinfo': {
+		'actors.mni': [
+			'teBi2OsPlGVBOOJil4OG3LvUEXA=',
+		],
+	},
 	'tls-ddave-cga': {
 		'cgadave.dav': [
 			's3aIWshFK2y/nO2BsQgL/VcNm5E=',
@@ -90,6 +100,19 @@ const skipIdentify = {
 		'img-raw-linear-8bpp',
 		'img-raw-planar-4bpp',
 		'tls-ccomic-sprite',
+		'tls-cosmo-masked',
+	],
+	'tls-cosmo-masked': [
+		'img-raw-linear-8bpp',
+		'img-raw-planar-4bpp',
+		'tls-ccomic-sprite',
+		'tls-cosmo',
+	],
+	'tls-cosmo-actrinfo': [
+		'img-raw-linear-8bpp',
+		'img-raw-planar-4bpp',
+		'tls-ccomic-sprite',
+		'tls-cosmo',
 	],
 	'tls-ddave-vga': [
 		'tls-cosmo',
