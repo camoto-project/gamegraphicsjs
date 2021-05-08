@@ -84,6 +84,10 @@ export function tilesetFromFrame({ frame, frameWidth, tileDims, bg })
 	for (let f = 0; f < tileDims.length; f++) {
 		const tileWidth = tileDims[f].width;
 		const tileHeight = tileDims[f].height;
+		if ((tileWidth === undefined) || (tileHeight === undefined)) {
+			console.log(tileDims[f].width, tileWidth, tileDims[f].height, tileHeight);
+			throw new Error(`Tile ${f} has undefined dimensions, these are mandatory.`);
+		}
 
 		if (tx + tileWidth > srcFrameWidth) {
 			// Wrap to the next line.
