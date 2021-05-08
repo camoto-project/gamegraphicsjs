@@ -113,7 +113,6 @@ class Operations
 
 	read(params) {
 		({ image: this.image, origFormat: this.origFormat } = this.readFile(params));
-		this.selectedFrames = this.image;
 	}
 
 	readpal(params) {
@@ -146,7 +145,7 @@ class Operations
 		const options = this.parseOptions(md, params.options);
 
 		if (!params.force) {
-			const problems = handler.checkLimits(this.selectedFrames, options);
+			const problems = handler.checkLimits(this.image, options);
 			if (problems.length) {
 				console.log('There are problems preventing the requested changes from taking place:\n');
 				for (let i = 0; i < problems.length; i++) {
@@ -160,7 +159,7 @@ class Operations
 		console.warn('Writing to', params.target, 'as', params.format);
 		let outContent, warnings;
 		try {
-			({ content: outContent, warnings } = handler.write(this.selectedFrames, options));
+			({ content: outContent, warnings } = handler.write(this.image, options));
 		} catch (e) {
 			debug(e);
 			throw new OperationsError(`save: write() failed - ${e.message}`);
@@ -236,25 +235,25 @@ class Operations
 	}
 
 	info() {
-		if (this.image.frames.length === 0) {
+		if (this.image.frames && this.image.frames.length === 0) {
 			if (this.image.palette) {
 				console.log('Type: Palette');
 			} else {
 				console.log('Type: Unknown (no frames or a palette)');
 			}
 
-		} else if (this.image.frames.length === 1) {
+		} else if (this.image.frames && this.image.frames.length === 1) {
 			console.log('Type: Single image');
 			const frameWidth = (this.image.frames[0].width === undefined) ? this.image.width : this.image.frames[0].width;
 			const frameHeight = (this.image.frames[0].height === undefined) ? this.image.height : this.image.frames[0].height;
 			console.log(`Size: ${frameWidth}x${frameHeight}`);
 
-		} else {
-			// Run through the images and see if any have an animation delay set.
+		} else if (this.image.frames) {
 			const imgWithDelay = this.image.frames.find(i => i.postDelay !== undefined);
 			if (imgWithDelay) {
 				console.log('Type: Image list (animation)');
 				console.log(`Number of frames: ${this.image.frames.length}`);
+
 			} else {
 				console.log('Type: Image list (tileset)');
 				console.log(`Number of top-level images: ${this.image.frames.length}`);
@@ -269,20 +268,44 @@ class Operations
 				};
 				const totalImages = fnCount(this.image.frames);
 				console.log(`Total number of images: ${totalImages}`);
+			}
 
-				const fnList = (img, prefix = '') => {
+		} else {
+			console.log('Type: Image array');
+
+			// Make it always an array.
+			let tileset;
+			if (this.image.frames) {
+				tileset = [this.image];
+			} else {
+				tileset = this.image;
+			}
+
+			for (let imgIndex = 0; imgIndex < tileset.length; imgIndex++) {
+				const img = tileset[imgIndex];
+
+				const fnList = (img, parentWidth, parentHeight, prefix = '') => {
 					for (let i = 0; i < img.length; i++) {
 						const j = img[i];
+						const width = j.width || parentWidth;
+						const height = j.height || parentHeight;
 						if (j instanceof Array) {
-							fnList(j, `${prefix}${i}.`);
+							fnList(j, width, height, `${prefix}${i}.`);
 						} else {
-							console.log(`${prefix}${i}: ${j.width}x${j.height}`);
+							let suffix = '';
+							if (j.frames) {
+								const imgWithDelay = j.frames.find(i => i.postDelay !== undefined);
+								if (imgWithDelay) {
+									suffix = ' (animation)';
+								}
+							}
+							console.log(`${prefix}${i}: ${width}x${height}${suffix}`);
 						}
 					}
 				};
-				fnList(this.image.frames);
-			}
-		} // if (image has multiple frames)
+				fnList(img.frames, img.width, img.height, `${imgIndex}.`);
+			} // for (each image in array)
+		} // if (image type)
 	}
 
 	select(params) {
@@ -290,27 +313,28 @@ class Operations
 			throw new OperationsError('select: missing image frame index (e.g. 1.2.3).');
 		}
 
-		function findIndex(sel, indices, count) {
-			//let sel = this.image;
+		function findIndex(img, indices, count) {
 			let selProg = '';
-			let selGroup, selIndex;
 			for (const i of indices) {
-				selGroup = sel;
-				selIndex = parseInt(i, 10);
-				sel = sel[selIndex];
-				if (!sel) {
-					throw new OperationsError(`select: invalid index "${params.target}", `
-						+ `item "${selProg.slice(1)}" does not have a ".${i}".`);
+				const selIndex = parseInt(i, 10);
+				if (img.frames) {
+					if (selIndex >= img.frames.length) {
+						throw new OperationsError(`select: invalid index "${params.target}", `
+																			+ `item "${selProg.slice(1)}" does not have a ".${i}".`);
+					}
+					img = img.clone(selIndex, count);
+				} else {
+					img = img[selIndex];
 				}
 				selProg += `.${i}`;
 			}
-			return selGroup.slice(selIndex, selIndex + count);
+			return img;
 		}
 
 		const [ from, to ] = params.target.split(',');
 		const count = parseInt(to, 10) || 1;
-		this.selectedFrames = findIndex(this.image, from.split('.'), count);
-		console.log(`Selected ${this.selectedFrames.length} image(s)`);
+		this.image = findIndex(this.image, from.split('.'), count);
+		console.log(`Selected ${this.image.frames.length} frame(s)`);
 	}
 }
 
