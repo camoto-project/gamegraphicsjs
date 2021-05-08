@@ -140,6 +140,13 @@ export default class ImageHandler
 				frameCount: { min: 1, max: 1 },
 
 				/**
+				 * Maximum and minimum number of images the format can read and write.
+				 * If 1, a single Image instance is read and written.  If greater than
+				 * 1, an array of Image instances is read and written.
+				 */
+				imageCount: { min: 1, max: 1 },
+
+				/**
 				 * A key/value list where the key matches a key in `Image.tags` and the
 				 * value is a description of what the tag represents.  Tags are for
 				 * metadata like titles, artist names, and so on.
@@ -160,63 +167,75 @@ export default class ImageHandler
 	 *   supplied image from being written in this format.  An empty array
 	 *   indicates no problems.
 	 */
-	static checkLimits(image) {
+	static checkLimits(img) {
 		const { limits } = this.metadata();
 		let issues = [];
 
-		if (image.frames.length > limits.frameCount.max) {
-			issues.push(`This image has ${image.frames.length} frame(s) but the `
-				+ `format can only write images with up to ${limits.frameCount.max} `
-				+ `frame(s).`);
-		}
-		if (image.frames.length < limits.frameCount.min) {
-			issues.push(`This image has ${image.frames.length} frame(s) but the `
-				+ `format requires at least ${limits.frameCount.min} frame(s).`);
+		let images;
+		if (img.length === undefined) {
+			images = [img];
+		} else {
+			images = img;
 		}
 
-		for (let f = 0; f < image.frames.length; f++) {
-			const frameWidth = (image.frames[f].width === undefined) ? image.width : image.frames[f].width;
-			const frameHeight = (image.frames[f].height === undefined) ? image.height : image.frames[f].height;
-
+		for (const image of images) {
 			if (
-				(limits.maximumSize.x !== undefined)
-				&& (frameWidth > limits.maximumSize.x)
+				(limits.frameCount.max !== undefined)
+				&& (image.frames.length > limits.frameCount.max)
 			) {
-				issues.push(`Frame #${f}'s width (${frameWidth}) is larger than the `
-					+ `maximum of ${limits.maximumSize.x} that this format can handle.`);
+				issues.push(`This image has ${image.frames.length} frame(s) but the `
+					+ `format can only write images with up to ${limits.frameCount.max} `
+					+ `frame(s).`);
+			}
+			if (image.frames.length < limits.frameCount.min) {
+				issues.push(`This image has ${image.frames.length} frame(s) but the `
+					+ `format requires at least ${limits.frameCount.min} frame(s).`);
 			}
 
-			if (
-				(limits.maximumSize.y !== undefined)
-				&& (frameHeight > limits.maximumSize.y)
-			) {
-				issues.push(`Frame #${f}'s height (${frameHeight}) is larger than the `
-					+ `maximum of ${limits.maximumSize.y} that this format can handle.`);
-			}
+			for (let f = 0; f < image.frames.length; f++) {
+				const frameWidth = (image.frames[f].width === undefined) ? image.width : image.frames[f].width;
+				const frameHeight = (image.frames[f].height === undefined) ? image.height : image.frames[f].height;
 
-			// Make sure the image doesn't have too many colours.
-			const maxIndex = 1 << limits.depth;
-			const pixels = image.frames[f].pixels;
-			for (let i = 0; i < pixels.length; i++) {
-				if (pixels[i] >= maxIndex) {
-					if (pixels[i] === limits.transparentIndex) {
-						// The out-of-range colour is assigned as transparent so allow it.
-						continue;
+				if (
+					(limits.maximumSize.x !== undefined)
+					&& (frameWidth > limits.maximumSize.x)
+				) {
+					issues.push(`Frame #${f}'s width (${frameWidth}) is larger than the `
+						+ `maximum of ${limits.maximumSize.x} that this format can handle.`);
+				}
+
+				if (
+					(limits.maximumSize.y !== undefined)
+					&& (frameHeight > limits.maximumSize.y)
+				) {
+					issues.push(`Frame #${f}'s height (${frameHeight}) is larger than the `
+						+ `maximum of ${limits.maximumSize.y} that this format can handle.`);
+				}
+
+				// Make sure the image doesn't have too many colours.
+				const maxIndex = 1 << limits.depth;
+				const pixels = image.frames[f].pixels;
+				for (let i = 0; i < pixels.length; i++) {
+					if (pixels[i] >= maxIndex) {
+						if (pixels[i] === limits.transparentIndex) {
+							// The out-of-range colour is assigned as transparent so allow it.
+							continue;
+						}
+						const x = i % frameWidth;
+						const y = i / frameWidth;
+						issues.push(`Frame #${f} contains a pixel of colour index `
+							+ `${pixels[i]} at (${x},${y}), but this format only supports `
+							+ `images with colour numbers less than ${maxIndex}.`);
+						break;
 					}
-					const x = i % frameWidth;
-					const y = i / frameWidth;
-					issues.push(`Frame #${f} contains a pixel of colour index `
-						+ `${pixels[i]} at (${x},${y}), but this format only supports `
-						+ `images with colour numbers less than ${maxIndex}.`);
-					break;
 				}
 			}
-		}
 
-		// Make sure we don't have metadata we can't write.
-		for (const idTag of Object.keys(image.tags)) {
-			if (!limits.tags[idTag]) {
-				issues.push(`This format cannot write the "${idTag}" tag.`);
+			// Make sure we don't have metadata we can't write.
+			for (const idTag of Object.keys(image.tags)) {
+				if (!limits.tags[idTag]) {
+					issues.push(`This format cannot write the "${idTag}" tag.`);
+				}
 			}
 		}
 
