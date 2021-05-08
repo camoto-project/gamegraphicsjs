@@ -163,13 +163,17 @@ for (const handler of gamegraphicsFormats) {
 
 				assert.ok(md.limits.frameCount, 'Missing frameCount');
 				assert.ok(md.limits.frameCount.min >= 0, 'Minimum frame count is invalid');
-				assert.ok(md.limits.frameCount.max >= 0, 'Maximum frame count is invalid');
+				assert.ok(
+					(md.limits.frameCount.max === undefined)
+					|| (md.limits.frameCount.max >= 0),
+					'Maximum frame count is invalid'
+				);
 			});
 
 		});
 
-		function testSize(width, height, message) {
-			const sizename = width + 'x' + height;
+		function testSize(width, height, message, count) {
+			const sizename = width + 'x' + height + ((count > 1) ? `-${count}` : '');
 			describe(`should handle dimensions of ${sizename} (${message})`, function () {
 				// Not all format handlers use this, but those that do all use the
 				// same keys.
@@ -192,7 +196,14 @@ for (const handler of gamegraphicsFormats) {
 				describe('read()', function() {
 					let image;
 					before('should read correctly', function() {
-						image = handler.read(contentEncoded, options);
+						let sourceImage = handler.read(contentEncoded, options);
+						if (count === 1) {
+							image = sourceImage;
+						} else {
+							assert.ok(sourceImage.length >= count, `Not enough images in `
+								+ `sample file (got ${sourceImage.length}, needed ${count}).`);
+							image = sourceImage[count - 1];
+						}
 						assert.notStrictEqual(image, undefined);
 						assert.notStrictEqual(image.frames, undefined);
 						assert.notStrictEqual(image.frames, null);
@@ -273,7 +284,9 @@ for (const handler of gamegraphicsFormats) {
 						assert.ok(image.frames.length >= md.limits.frameCount.min,
 							`Image has ${image.frames.length} frames, but the minimum `
 							+ `permitted is ${md.limits.frameCount.min}`);
-						assert.ok(image.frames.length <= md.limits.frameCount.max,
+						assert.ok(
+							(md.limits.frameCount.max === undefined)
+							|| (image.frames.length <= md.limits.frameCount.max),
 							`Image has ${image.frames.length} frames, but the maximum `
 							+ `permitted is ${md.limits.frameCount.max}`);
 						for (let f = 0; f < image.frames.length; f++) {
@@ -286,11 +299,12 @@ for (const handler of gamegraphicsFormats) {
 
 				// Write the image
 				describe('write()', function() {
-					let image;
+					let images;
 					before('generate standard image', function() {
+						const maxFrameCount = (md.limits.frameCount.max === undefined) ? 100 : md.limits.frameCount.max;
 						const frameCount = Math.max(
 							md.limits.frameCount.min,
-							Math.min(4, md.limits.frameCount.max)
+							Math.min(count, maxFrameCount)
 						);
 						let frames = [];
 						for (let f = 0; f < frameCount; f++) {
@@ -307,32 +321,47 @@ for (const handler of gamegraphicsFormats) {
 							frames.push(frame);
 						}
 						const imgpal = md.limits.hasPalette ? createStandardPalette(md.limits.transparentIndex) : null;
-						image = new Image({
+						const img = new Image({
 							width,
 							height,
 							frames,
 							palette: imgpal,
 						});
+
+						// Duplicate it so we have an array of images.
+						images = [];
+						for (let i = 0; i < count; i++) {
+							images.push(img.clone());
+						}
 					});
 
 					it('checkLimits() should not complain', function() {
-						for (let f = 0; f < image.frames.length; f++) {
-							assert.notStrictEqual(image.frames[f].pixels, undefined,
-								`BUG: Frame ${f} exists but has no pixel data.`);
+						for (const image of images) {
+							for (let f = 0; f < image.frames.length; f++) {
+								assert.notStrictEqual(image.frames[f].pixels, undefined,
+									`BUG: Frame ${f} exists but has no pixel data.`);
+							}
 						}
-						const warnings = handler.checkLimits(image);
-						assert.ok(warnings.length === 0);
+						const targetImage = (count === 1) ? images[0] : images;
+						const warnings = handler.checkLimits(targetImage);
+						assert.ok(warnings.length === 0, 'Got unexpected warning: ' + warnings[0]);
 					});
 
 					it('should write correctly using image dims', function() {
 						// Zero out the frame dimensions to force the image dimensions to
 						// be used.
-						let img2 = image.clone();
-						for (const f of img2.frames) {
-							f.width = undefined;
-							f.height = undefined;
+						let img2 = [];
+						for (let i = 0; i < count; i++) {
+							let cpyImage = images[i].clone();
+							for (const f of cpyImage.frames) {
+								f.width = undefined;
+								f.height = undefined;
+							}
+							img2.push(cpyImage);
 						}
-						const { content: contentGenerated } = handler.write(img2, options);
+						const targetImage = (count === 1) ? img2[0] : img2;
+
+						const { content: contentGenerated } = handler.write(targetImage, options);
 
 						TestUtil.contentEqual(contentEncoded, contentGenerated);
 					});
@@ -341,12 +370,16 @@ for (const handler of gamegraphicsFormats) {
 						// Move the dimensions from the main image onto the frame instead.
 						// The format handler should use the frame dimensions in preference
 						// to the image dimensions, if present.
-						let img2 = image.clone();
-						// Set to zero rather than undefined as any value is supposed to be
-						// ignored if the frame dims are present.
-						img2.width = 0;
-						img2.height = 0;
-						const { content: contentGenerated } = handler.write(img2, options);
+						let img2 = [];
+						for (let i = 0; i < count; i++) {
+							let cpyImage = images[i].clone();
+							cpyImage.width = 0;
+							cpyImage.height = 0;
+							img2.push(cpyImage);
+						}
+						const targetImage = (count === 1) ? img2[0] : img2;
+
+						const { content: contentGenerated } = handler.write(targetImage, options);
 
 						TestUtil.contentEqual(contentEncoded, contentGenerated);
 					});
@@ -388,13 +421,13 @@ for (const handler of gamegraphicsFormats) {
 			y: (md.limits.maximumSize.y === undefined) ? 1024 : md.limits.maximumSize.y,
 		};
 
-		testSize(md.limits.minimumSize.x, md.limits.minimumSize.y, 'Minimum permitted size');
+		testSize(md.limits.minimumSize.x, md.limits.minimumSize.y, 'Minimum permitted size', 1);
 
 		if (
 			(md.limits.maximumSize.x > md.limits.minimumSize.x)
 			|| (md.limits.maximumSize.y > md.limits.minimumSize.y)
 		) {
-			testSize(maxDims.x, maxDims.y, 'Maximum permitted size');
+			testSize(maxDims.x, maxDims.y, 'Maximum permitted size', 1);
 		}
 
 		[
@@ -420,7 +453,13 @@ for (const handler of gamegraphicsFormats) {
 				&& (md.limits.multipleSize.x && (testDims.x % md.limits.multipleSize.x === 0))
 				&& (md.limits.multipleSize.y && (testDims.y % md.limits.multipleSize.y === 0))
 			) {
-				testSize(testDims.x, testDims.y, 'Standard test');
+				testSize(testDims.x, testDims.y, 'Standard test', 1);
+				if (
+					(md.limits.imageCount.max === undefined)
+					|| (md.limits.imageCount.max > 1)
+				) {
+					testSize(testDims.x, testDims.y, 'Standard test with array of two images', 2);
+				}
 			}
 		});
 

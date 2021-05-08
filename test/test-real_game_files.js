@@ -189,7 +189,7 @@ describe(`Tests with real game files (if present)`, function() {
 								content2[imgFilename2].main,
 								content2[imgFilename2].main.filename
 							);
-							assert.equal(result.valid, false);
+							assert.notEqual(result.valid, true);
 						});
 					}
 				}
@@ -203,9 +203,18 @@ describe(`Tests with real game files (if present)`, function() {
 						const { handler, content } = format[idFormat];
 						if (!content) this.skip();
 						const img = handler.read(content[targetFile]);
+						const imgs = (img.length === undefined) ? [img] : img;
 
 						for (let f = 0; f < targetHash.length; f++) {
-							assert.equal(TestUtil.hash(img.frames[f].pixels), targetHash[f],
+							let pixels;
+							if (img.length && !img.frames) {
+								// Got an array of images, use the index as the image index
+								// instead.
+								pixels = img[f].frames[0].pixels;
+							} else {
+								pixels = img.frames[f].pixels;
+							}
+							assert.equal(TestUtil.hash(pixels), targetHash[f],
 								`Pixel data for "${targetFile}" frame ${f} differs to what `
 								+ `was expected.`);
 						}
@@ -213,21 +222,29 @@ describe(`Tests with real game files (if present)`, function() {
 						// Generate a new archive that should be identical to the original.
 						const output = handler.write(img);
 						const img2 = handler.read(output.content);
+						// Make it an array if it isn't.
+						const imgs2 = (img2.length === undefined) ? [img2] : img2;
 
-						// Compare the content against what was read from the first file,
-						// which also passed the hash check.  This way if the content is
-						// wrong, we get a hex dump of the differences rather than just
-						// a "hash doesn't match" error.
-						const largestFrames = Math.max(img.frames.length, img2.frames.length);
-						for (let f = 0; f < largestFrames; f++) {
-							const frame = img.frames[f];
-							const frame2 = img2.frames[f];
-							TestUtil.buffersEqual(
-								(frame && frame.pixels) || new Uint8Array(),
-								(frame2 && frame2.pixels) || new Uint8Array()
-							);
-							assert.equal(frame.width, frame2.width, `Width of frame ${f} changed after rewrite`);
-							assert.equal(frame.height, frame2.height, `Height of frame ${f} changed after rewrite`);
+						for (let i = 0; i < imgs2.length; i++) {
+							const imgA = imgs[i];
+							const imgB = imgs2[i];
+
+							// Compare the content against what was read from the first file,
+							// which also passed the hash check.  This way if the content is
+							// wrong, we get a hex dump of the differences rather than just
+							// a "hash doesn't match" error.
+							const largestFrames = Math.max(imgA.frames.length, imgB.frames.length);
+							for (let f = 0; f < largestFrames; f++) {
+								const frameA = imgA.frames[f];
+								const frameB = imgB.frames[f];
+								TestUtil.buffersEqual(
+									(frameA && frameA.pixels) || new Uint8Array(),
+									(frameB && frameB.pixels) || new Uint8Array(),
+									`Pixels in image ${i} frame ${f} changed after rewrite`
+								);
+								assert.equal(frameA.width, frameB.width, `Width of frame ${f} changed after rewrite`);
+								assert.equal(frameA.height, frameB.height, `Height of frame ${f} changed after rewrite`);
+							}
 						}
 					});
 				}
