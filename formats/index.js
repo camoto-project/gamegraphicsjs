@@ -23,6 +23,7 @@ export { default as img_raw_planar_4bpp } from './img-raw-planar-4bpp.js';
 export { default as img_ccomic_splash } from './img-ccomic-splash.js';
 
 export { default as pal_vga_6bit } from './pal-vga-6bit.js';
+export { default as pal_vga_6bit_papyrus } from './pal-vga-6bit-papyrus.js';
 export { default as pal_vga_8bit } from './pal-vga-8bit.js';
 
 export { default as tls_ccomic_map } from './tls-ccomic-map.js';
