@@ -105,6 +105,13 @@ class Tileset_DDave_Common extends ImageHandler
 			};
 		}
 
+		if (header.count < this.metadata().limits.frameCount.min) {
+			return {
+				valid: false,
+				reason: `Too few tiles.`,
+			};
+		}
+
 		let endOfLastTile = 0;
 		let tileSize = 16 * 16 * this.imageBitDepth() / 8;
 		for (let i = 0; i < header.count; i++) {
