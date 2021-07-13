@@ -19,6 +19,7 @@
 
 export { default as img_png } from './img-png.js';
 export { default as img_stp } from './img-stp.js';
+export { default as img_del } from './img-del.js';
 export { default as img_raw_linear_8bpp } from './img-raw-linear-8bpp.js';
 export { default as img_raw_planar_4bpp } from './img-raw-planar-4bpp.js';
 export { default as img_ccomic_splash } from './img-ccomic-splash.js';
