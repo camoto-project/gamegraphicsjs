@@ -87,7 +87,8 @@ export default class Image_Del extends ImageHandler {
 		// (Theoretically, a DEL file could contain any number of zero-pixel
 		// transparency commands, which means that the file data could
 		// be arbitrarily large relative to the image size. We're going
-		// to assume that this would not actually occur in any file.)
+		// to assume that this would not actually occur in any file, and in
+		// fact, we reject files in which this occurs at the first byte.)
 		const minPossiblePixelCount = Math.floor(rasterDataSize / 2);
 
 		// The maximum possible pixel count (based on file size) would be
@@ -111,6 +112,23 @@ export default class Image_Del extends ImageHandler {
 			};
 		}
 
+		// Check for a couple encodings that are technically allowed but that should never appear
+		if (content.length >= 5) {
+			if ((content[4] >> 2) == 0) {
+				return {
+					valid: false,
+					reason: `Image contains a sequence of length 0.`,
+				};
+			}
+
+			if (((content[4] & 0x03) == 0x03) && (content[4] & 0xFC)) {
+				return {
+					valid: false,
+					reason: `Image contains a single-byte-copy command with unused high bits set.`,
+				};
+			}
+		}
+
 		return {
 			valid: true,
 			reason: `Potentially valid DEL image, pending decode.`,
@@ -126,7 +144,7 @@ export default class Image_Del extends ImageHandler {
 		let inputPos = DEL_HEADER_SIZE_BYTES;
 		let outputPos = 0;
 
-		while (inputPos < content.main.length) {
+		while ((inputPos < content.main.length) && (outputPos < out.length)) {
 			const cmdbyte = content.main[inputPos];
 			let databyte = 0;
 			inputPos++;
@@ -405,9 +423,19 @@ export default class Image_Del extends ImageHandler {
 			pixelIndex++;
 		}
 
-		// TODO: write out any unfinished sequence (or individual value) at the end
-		if (deltaRunVals.length > 0) {
+		// if there's an unfinished sequence at the end, write it out now
+		if (runStartIndex != undefined) {
+
+			const runLength = pixelIndex - runStartIndex;
+			this.writeSingleColorRun(buffer, lastColor, runLength);
+
+		} else if (deltaRunVals.length > 0) {
+
 			this.writeDeltaSeq(buffer, deltaRunVals);
+
+		} else if (lastPixelInSequence == false) {
+
+			buffer.put([0x03, lastColor]);
 		}
 
 		return {

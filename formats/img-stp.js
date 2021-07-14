@@ -76,6 +76,14 @@ export default class Image_Stp extends ImageHandler {
 
 		let buffer = new RecordBuffer(content);
 		const header = buffer.readRecord(recordTypes.header);
+
+		if (header.negativeOffsetX > 320 || header.negativeOffsetY > 200) {
+			return {
+				valid: false,
+				reason: `Negative offset header fields contain values larger than maximum possible screen size for STP images.`,
+			};
+		}
+
 		const reportedPixelCount = header.width * header.height;
 		const rasterDataSize = content.length - STP_HEADER_SIZE_BYTES;
 
