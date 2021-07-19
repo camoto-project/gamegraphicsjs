@@ -21,16 +21,19 @@ archive, supply the correct format identifier, pass any options (such as the
 image width and height for those formats that don't store it) and only then can
 read and write the image.
 
-| Game                      | Types                  | Code                    |
-|---------------------------|------------------------|-------------------------|
-| Captain Comic             | Splash                 | img-ccomic-splash       |
-| Captain Comic             | Sprites                | tls-ccomic-sprite       |
-| Captain Comic             | Map tiles              | tls-ccomic-map          |
-| Cosmo's Cosmic Adventures | Full-screen images     | img-raw-planar-4bpp     |
-| Cosmo's Cosmic Adventures | Tilesets (solid)       | tls-cosmo               |
-| Cosmo's Cosmic Adventures | Tilesets (transparent) | tls-cosmo-masked        |
-| Cosmo's Cosmic Adventures | Actor images           | tls-cosmo-actrinfo      |
-| Dangerous Dave            | Map tileset            | tls-ddave-{cga,ega,vga} |
+| Game                      | Types                    | Code                    |
+|---------------------------|--------------------------|-------------------------|
+| Captain Comic             | Splash                   | img-ccomic-splash       |
+| Captain Comic             | Sprites                  | tls-ccomic-sprite       |
+| Captain Comic             | Map tiles                | tls-ccomic-map          |
+| Cosmo's Cosmic Adventures | Full-screen images       | img-raw-planar-4bpp     |
+| Cosmo's Cosmic Adventures | Tilesets (solid)         | tls-cosmo               |
+| Cosmo's Cosmic Adventures | Tilesets (transparent)   | tls-cosmo-masked        |
+| Cosmo's Cosmic Adventures | Actor images             | tls-cosmo-actrinfo      |
+| Dangerous Dave            | Map tileset              | tls-ddave-{cga,ega,vga} |
+| Nomad                     | Alien animation cels     | img-del                 |
+| Nomad                     | Sprites                  | img-stp                 |
+| Nomad                     | Animation/related frames | img-rol                 |
 
 ## Installation as an end-user
 
