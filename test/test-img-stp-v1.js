@@ -1,5 +1,5 @@
 /*
- * Tests specific to img-stp.
+ * Tests specific to img-stp-v1.
  *
  * Copyright (C) 2010-2021 Adam Nielsen <malvineous@shikadi.net>
  * Copyright (C) 2021 Colin Bourassa
@@ -21,7 +21,7 @@
 import assert from 'assert';
 import TestUtil from './util.js';
 import {
-	img_stp as handler
+	Image_Stp_V1 as handler
 } from '../index.js';
 
 const md = handler.metadata();

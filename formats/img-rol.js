@@ -29,7 +29,11 @@ import {
 } from '@camoto/record-io-buffer';
 import ImageHandler from '../interface/imageHandler.js';
 import Image from '../interface/image.js';
-import { Frame, img_stp as stpHandler } from '../index.js';
+import Frame from '../interface/frame.js';
+import {
+	Image_Stp_V1 as stpHandlerV1,
+	Image_Stp_V2 as stpHandlerV2,
+} from '../index.js';
 
 const recordTypes = {
 	fatEntry: {
@@ -37,20 +41,22 @@ const recordTypes = {
 	},
 };
 
-const STP_HEADER_SIZE_BYTES = 8;
+const STP_V1_HEADER_SIZE_BYTES = 10;
+const STP_V2_HEADER_SIZE_BYTES = 8;
 
-export default class Image_Rol extends ImageHandler {
+/**
+ * This is the common base class for two versions of the Stamp Roll format
+ * that differ slightly. The ROL format itself only defines a simple
+ * container for STP images that are concatenated within. STP images can
+ * be stored in one of two different formats (which are referred to as
+ * Version 1 and Version 2, in order of their chronological appearance).
+ * The STP images contained within a ROL must all be of the same version.
+ * The version of the ROL file is defined to match the version of the
+ * contained STP images.
+ */
+class Image_Rol_Common extends ImageHandler {
 	static metadata() {
-		let md = {
-			...super.metadata(),
-			id: FORMAT_ID,
-			title: 'Stamp Roll image',
-			options: {},
-			glob: [
-				'*.rol',
-			],
-		};
-
+		let md = super.metadata();
 		md.limits.minimumSize.x = 0;
 		md.limits.minimumSize.y = 0;
 		md.limits.maximumSize.x = undefined;
@@ -60,13 +66,25 @@ export default class Image_Rol extends ImageHandler {
 		md.limits.hasPalette = false;
 		md.limits.transparentIndex = 255;
 		md.limits.frameCount.min = 1;
-		md.limits.frameCount.max = undefined;		
+		md.limits.frameCount.max = undefined;
 		return md;
 	}
 
-	static identify(content) {
+	static identifyByVersion(content, rolVersion) {
 
-		if (content.length < (4 + STP_HEADER_SIZE_BYTES)) {
+		let stpHandler = undefined;
+		if (rolVersion == 1) {
+			stpHandler = stpHandlerV1;
+		} else if (rolVersion == 2) {
+			stpHandler = stpHandlerV2;
+		} else {
+			throw new Error(`ROL version must be either 1 or 2.`);
+		}
+
+		const stpHeaderSizeBytes = (rolVersion == 1) ? STP_V1_HEADER_SIZE_BYTES : STP_V2_HEADER_SIZE_BYTES;
+
+		// Require at least a single 0x0 frame (4 bytes for ROL index + empty STP file)
+		if (content.length < (4 + stpHeaderSizeBytes)) {
 			return {
 				valid: false,
 				reason: `File size is smaller than minimum possible size for one 0x0 frame.`,
@@ -84,7 +102,7 @@ export default class Image_Rol extends ImageHandler {
 			};
 		}
 
-		if (content.length < (headerSize + (frameCount * STP_HEADER_SIZE_BYTES))) {
+		if (content.length < (headerSize + (frameCount * stpHeaderSizeBytes))) {
 			return {
 				valid: false,
 				reason: `Content too short for frame count.`,
@@ -104,13 +122,27 @@ export default class Image_Rol extends ImageHandler {
 
 		// Read each offset and length and ensure it is valid.
 		for (let i = 1; i < frameCount; i++) {
-			
+
 			startOffsets[i] = buffer.read(RecordType.int.u32le);
 
-			if ((startOffsets[i] + 4) >= content.length) {
+			if ((startOffsets[i] + stpHeaderSizeBytes) >= content.length) {
 				return {
 					valid: false,
 					reason: `File ${i} @ offset ${startOffsets[i]} starts beyond the end of the archive.`,
+				};
+			}
+		}
+
+		// Verify that all the contained STP files are valid.
+		for (let i = 0; i < frameCount; i++) {
+
+			const pastEnd = (i == frameCount - 1) ? content.length : startOffsets[i + 1];
+			const stpData = content.slice(startOffsets[i], pastEnd);
+
+			if (stpHandler.identify(stpData).valid == false) {
+				return {
+					valid: false,
+					reason: `File ${i} @ offset ${startOffsets[i]} is not a valid STP version ${rolVersion} file.`,
 				};
 			}
 		}
@@ -121,13 +153,18 @@ export default class Image_Rol extends ImageHandler {
 		};
 	}
 
-	static read(content) {
+	static readByVersion(content, rolVersion) {
+
+		if ((rolVersion !== 1) && (rolVersion !== 2)) {
+			throw new Error(`ROL version must be either 1 and 2.`);
+		}
+		const stpHandler = (rolVersion == 1) ? stpHandlerV1 : stpHandlerV2;
 
 		let buffer = new RecordBuffer(content.main);
 		const headerSize = buffer.read(RecordType.int.u32le);
 		const frameCount = Math.floor(headerSize / 4);
 		let rolFrames = [];
-		
+
 		// The size of the header is also the file offset at which the
 		// first contained file is stored.
 		let startOffsets = [headerSize];
@@ -137,38 +174,46 @@ export default class Image_Rol extends ImageHandler {
 			startOffsets[i] = buffer.read(RecordType.int.u32le);
 		}
 
-		let maxWidth = 0;
-		let maxHeight = 0;
+		let frame0Width = undefined;
+		let frame0Height = undefined;
 
 		for (let i = 0; i < frameCount; i++) {
 			const length = (i == frameCount - 1) ?
 				(content.main.length - startOffsets[i]) : (startOffsets[i + 1] - startOffsets[i]);
 			const stpData = content.main.slice(startOffsets[i], startOffsets[i] + length);
-			const stpImg = stpHandler.read({main: stpData});
+			const stpImg = stpHandler.read({
+				main: stpData
+			});
 
-			if (stpImg.width > maxWidth) {
-				maxWidth = stpImg.width;
-			}
-
-			if (stpImg.height > maxHeight) {
-				maxHeight = stpImg.height;
+			// Capture the width/height from the first frame for reporting
+			if (i == 0) {
+				frame0Width = stpImg.width;
+				frame0Height = stpImg.height;
 			}
 
 			rolFrames.push(new Frame({
 				width: stpImg.width,
 				height: stpImg.height,
+				hotspotX: stpImg.hotspotX,
+				hotspotY: stpImg.hotspotY,
 				pixels: stpImg.frames[0].pixels,
 			}));
 		}
-		
+
 		return new Image({
-			width: maxWidth,
-			height: maxHeight,
+			width: frame0Width,
+			height: frame0Height,
 			frames: rolFrames,
 		});
 	}
 
-	static write(image) {
+	static writeByVersion(image, rolVersion) {
+
+		if ((rolVersion !== 1) && (rolVersion !== 2)) {
+			throw new Error(`ROL version must be either 1 and 2.`);
+		}
+		const stpHandler = (rolVersion == 1) ? stpHandlerV1 : stpHandlerV2;
+		const stpHeaderSizeBytes = (rolVersion == 1) ? STP_V1_HEADER_SIZE_BYTES : STP_V2_HEADER_SIZE_BYTES;
 
 		if (image.frames.length < 1) {
 			return {
@@ -179,30 +224,36 @@ export default class Image_Rol extends ImageHandler {
 
 		let stpDataSizes = [];
 		let stpData = [];
-		
+
 		// header contains a 4-byte entry for each frame
 		const headerSize = image.frames.length * 4;
 
 		// Allocate the minimum space required (if every frame were 0x0)
-		let buffer = new RecordBuffer(headerSize + (STP_HEADER_SIZE_BYTES * image.frames.length));
+		let buffer = new RecordBuffer(headerSize + (stpHeaderSizeBytes * image.frames.length));
 
 		// Generate and store the STP image data
 		for (let i = 0; i < image.frames.length; i++) {
-			
+
 			let frameStpData = stpHandler.write(new Image({
 				width: (image.frames[i].width === undefined) ? image.width : image.frames[i].width,
 				height: (image.frames[i].height === undefined) ? image.height : image.frames[i].height,
-				frames: [ image.frames[i] ] })
-			);
-			
+				hotspotX: image.frames[i].hotspotX,
+				hotspotY: image.frames[i].hotspotY,
+				frames: [image.frames[i]]
+			}));
+
 			stpData.push(frameStpData.content.main);
 			stpDataSizes[i] = frameStpData.content.main.length;
 		}
 
 		// Write the start offsets in the header
-		buffer.writeRecord(recordTypes.fatEntry, {offset: headerSize});
+		buffer.writeRecord(recordTypes.fatEntry, {
+			offset: headerSize
+		});
 		for (let i = 1; i < image.frames.length; i++) {
-			buffer.writeRecord(recordTypes.fatEntry, { offset: headerSize + stpDataSizes[i] });
+			buffer.writeRecord(recordTypes.fatEntry, {
+				offset: headerSize + stpDataSizes[i]
+			});
 		}
 
 		// Write the STP image content
@@ -216,5 +267,59 @@ export default class Image_Rol extends ImageHandler {
 			},
 			warnings: [],
 		};
+	}
+}
+
+export class Image_Rol_V1 extends Image_Rol_Common {
+
+	static metadata() {
+		return {
+			...super.metadata(),
+			id: FORMAT_ID + '-v1',
+			title: 'Stamp Roll image, version 1',
+			options: {},
+			glob: [
+				'*.rol',
+			],
+		};
+	}
+
+	static identify(content) {
+		return super.identifyByVersion(content, 1);
+	}
+
+	static read(content) {
+		return super.readByVersion(content, 1);
+	}
+
+	static write(content) {
+		return super.writeByVersion(content, 1);
+	}
+}
+
+export class Image_Rol_V2 extends Image_Rol_Common {
+
+	static metadata() {
+		return {
+			...super.metadata(),
+			id: FORMAT_ID + '-v2',
+			title: 'Stamp Roll image, version 2',
+			options: {},
+			glob: [
+				'*.rol',
+			],
+		};
+	}
+
+	static identify(content) {
+		return super.identifyByVersion(content, 2);
+	}
+
+	static read(content) {
+		return super.readByVersion(content, 2);
+	}
+
+	static write(content) {
+		return super.writeByVersion(content, 2);
 	}
 }

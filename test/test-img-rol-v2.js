@@ -1,5 +1,5 @@
 /*
- * Tests specific to img-rol.
+ * Tests specific to img-rol-v2.
  *
  * Copyright (C) 2010-2021 Adam Nielsen <malvineous@shikadi.net>
  *               2021 Colin Bourassa
@@ -21,7 +21,7 @@
 import assert from 'assert';
 import TestUtil from './util.js';
 import {
-	img_rol as handler
+	Image_Rol_V2 as handler
 } from '../index.js';
 
 const md = handler.metadata();

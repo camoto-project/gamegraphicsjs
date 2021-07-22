@@ -32,28 +32,35 @@ import Image from '../interface/image.js';
 import Frame from '../interface/frame.js';
 
 const recordTypes = {
+
+	// This additional word is present at the start of version 1 files only.
+	unknownMarker: {
+		marker: RecordType.int.u16le,
+	},
 	header: {
 		width: RecordType.int.u16le,
 		height: RecordType.int.u16le,
-		negativeOffsetX: RecordType.int.u16le,
-		negativeOffsetY: RecordType.int.u16le,
+		hotspotX: RecordType.int.s16le,
+		hotspotY: RecordType.int.s16le,
 	},
 };
 
-const STP_HEADER_SIZE_BYTES = 8;
+const STP_V1_HEADER_SIZE_BYTES = 10;
+const STP_V2_HEADER_SIZE_BYTES = 8;
 const MAX_RUNLENGTH_TRANSPARENCY = 0x7F;
 const MAX_RUNLENGTH_OPAQUE = 0x3F;
 const MAX_DIRECT_SEQUENCE_LEN = 0x3F;
-const PAL_TRANSPARENCY_INDEX = 0xFF;
 
-export default class Image_Stp extends ImageHandler {
+/**
+ * The two known versions of the STP image format differ only by the presence
+ * or absence of a single 16-bit word at the start of the header. This word
+ * only exists in the (chronologically earlier) Version 1 STP files, where its
+ * value was observed to always be 1. Later STP files (Version 2) do not
+ * contain this extra word.
+ */
+class Image_Stp_Common extends ImageHandler {
 	static metadata() {
-		let md = {
-			...super.metadata(),
-			id: FORMAT_ID,
-			title: 'Stamp image',
-			options: {},
-		};
+		let md = super.metadata();
 
 		md.limits.minimumSize.x = 0;
 		md.limits.minimumSize.y = 0;
@@ -61,13 +68,20 @@ export default class Image_Stp extends ImageHandler {
 		md.limits.maximumSize.y = undefined;
 		md.limits.depth = 8;
 		md.limits.hasPalette = false;
+		md.limits.transparentIndex = 255;
 
 		return md;
 	}
 
-	static identify(content) {
+	static identifyByVersion(content, stpVersion) {
 
-		if (content.length < STP_HEADER_SIZE_BYTES) {
+		if ((stpVersion !== 1) && (stpVersion !== 2)) {
+			throw new Error(`STP version must be either 1 or 2.`);
+		}
+
+		const headerSize = (stpVersion == 1) ? STP_V1_HEADER_SIZE_BYTES : STP_V2_HEADER_SIZE_BYTES;
+
+		if (content.length < headerSize) {
 			return {
 				valid: false,
 				reason: `File size is smaller than minimum possible size for 0x0 image.`,
@@ -75,17 +89,20 @@ export default class Image_Stp extends ImageHandler {
 		}
 
 		let buffer = new RecordBuffer(content);
-		const header = buffer.readRecord(recordTypes.header);
+		if (stpVersion == 1) {
+			buffer.readRecord(recordTypes.unknownMarker);
+		}
 
-		if (header.negativeOffsetX > 320 || header.negativeOffsetY > 200) {
+		const header = buffer.readRecord(recordTypes.header);
+		if (header.hotspotX > 320 || header.hotspotY > 200) {
 			return {
 				valid: false,
-				reason: `Negative offset header fields contain values larger than maximum possible screen size for STP images.`,
+				reason: `Hotspot position(s) contain values larger than maximum possible screen size for STP images.`,
 			};
 		}
 
 		const reportedPixelCount = header.width * header.height;
-		const rasterDataSize = content.length - STP_HEADER_SIZE_BYTES;
+		const rasterDataSize = content.length - headerSize;
 
 		// We can compute a minimum possible image size (in pixel count)
 		// for a given STP file by assuming the least efficient packing
@@ -123,18 +140,33 @@ export default class Image_Stp extends ImageHandler {
 		};
 	}
 
-	static read(content) {
+	static readByVersion(content, stpVersion) {
 
 		let buffer = new RecordBuffer(content.main);
+		let inputPos = undefined;
+
+		if (stpVersion == 1) {
+
+			inputPos = STP_V1_HEADER_SIZE_BYTES;
+			buffer.readRecord(recordTypes.unknownMarker);
+
+		} else if (stpVersion == 2) {
+
+			inputPos = STP_V2_HEADER_SIZE_BYTES;
+
+		} else {
+			throw new Error(`STP version must be either 1 or 2.`);
+		}
+
 		const header = buffer.readRecord(recordTypes.header);
 
 		let out = new Uint8Array(header.width * header.height);
-		let inputPos = STP_HEADER_SIZE_BYTES;
 		let outputPos = 0;
 		let directCopySeq = false;
 		let repeatSeq = false;
 		let transparencySeq = false;
 		let count = 0;
+		const transparentIndex = this.metadata().limits.transparentIndex;
 
 		while (((inputPos < content.main.length) || transparencySeq) && (outputPos < out.length)) {
 
@@ -160,7 +192,7 @@ export default class Image_Stp extends ImageHandler {
 			} else if (transparencySeq) {
 
 				while ((outputPos < out.length) && (count > 0)) {
-					out[outputPos++] = PAL_TRANSPARENCY_INDEX;
+					out[outputPos++] = transparentIndex;
 					count--;
 				}
 				transparencySeq = false;
@@ -200,6 +232,8 @@ export default class Image_Stp extends ImageHandler {
 		return new Image({
 			width: header.width,
 			height: header.height,
+			hotspotX: header.hotspotX,
+			hotspotY: header.hotspotY,
 			frames: [
 				new Frame({
 					pixels: out,
@@ -208,7 +242,12 @@ export default class Image_Stp extends ImageHandler {
 		});
 	}
 
-	static write(image) {
+	static writeByVersion(image, stpVersion) {
+
+		if ((stpVersion !== 1) && (stpVersion !== 2)) {
+			throw new Error(`STP version must be either 1 or 2.`);
+		}
+
 		if (image.frames.length !== 1) {
 			throw new Error(`Can only write one frame to this format.`);
 		}
@@ -217,8 +256,10 @@ export default class Image_Stp extends ImageHandler {
 		const frameWidth = (frame.width === undefined) ? image.width : frame.width;
 		const frameHeight = (frame.height === undefined) ? image.height : frame.height;
 		const pixels = frame.pixels;
+		const headerSize = (stpVersion == 1) ? STP_V1_HEADER_SIZE_BYTES : STP_V2_HEADER_SIZE_BYTES;
+		const transparentIndex = this.metadata().transparentIndex;
 
-		let buffer = new RecordBuffer(frame.pixels.length + STP_HEADER_SIZE_BYTES);
+		let buffer = new RecordBuffer(frame.pixels.length + headerSize);
 
 		let pixelIndex = 0; // index of pixel currently being inspected
 		let runStartIndex = 0; // start of the current sequence
@@ -227,11 +268,17 @@ export default class Image_Stp extends ImageHandler {
 		let directSeq = false; // flag indicating whether current sequence is a byte-for-byte copy from input
 		let runSeq = false; // flag indicating whether current sequence is a run-length of a single value
 
+		if (stpVersion == 1) {
+			buffer.writeRecord(recordTypes.unknownMarker, {
+				marker: 1
+			});
+		}
+
 		buffer.writeRecord(recordTypes.header, {
 			width: frameWidth,
 			height: frameHeight,
-			negativeOffsetX: 0,
-			negativeOffsetY: 0,
+			hotspotX: image.hotspotX,
+			hotspotY: image.hotspotY,
 		});
 
 		while (pixelIndex < pixels.length) {
@@ -256,7 +303,7 @@ export default class Image_Stp extends ImageHandler {
 					runLength = 2;
 					runStartIndex = pixelIndex - 1;
 
-				} else if ((runColor == PAL_TRANSPARENCY_INDEX) &&
+				} else if ((runColor == transparentIndex) &&
 					(runLength == MAX_RUNLENGTH_TRANSPARENCY)) {
 
 					// write a control byte with the transparency bit (MSB) set, with
@@ -306,8 +353,8 @@ export default class Image_Stp extends ImageHandler {
 
 					// we were in a color/transparency run, but that run has now ended
 					// so write the encoding to the output buffer
-					const ctrlBits = (runColor == PAL_TRANSPARENCY_INDEX) ? 0x80 : 0x40;
-					const countMask = (runColor == PAL_TRANSPARENCY_INDEX) ? 0x7F : 0x3F;
+					const ctrlBits = (runColor == transparentIndex) ? 0x80 : 0x40;
+					const countMask = (runColor == transparentIndex) ? 0x7F : 0x3F;
 					const ctrlByte = ctrlBits | (runLength & countMask);
 					buffer.put([ctrlByte, runColor]);
 
@@ -334,8 +381,8 @@ export default class Image_Stp extends ImageHandler {
 		// if there's an unfinished sequence at the end, write it out now
 		if (runLength > 0) {
 			if (runSeq) {
-				const ctrlBits = (runColor == PAL_TRANSPARENCY_INDEX) ? 0x80 : 0x40;
-				const countMask = (runColor == PAL_TRANSPARENCY_INDEX) ? 0x7F : 0x3F;
+				const ctrlBits = (runColor == transparentIndex) ? 0x80 : 0x40;
+				const countMask = (runColor == transparentIndex) ? 0x7F : 0x3F;
 				const ctrlByte = ctrlBits | (runLength & countMask);
 				buffer.put([ctrlByte, runColor]);
 			} else {
@@ -352,5 +399,59 @@ export default class Image_Stp extends ImageHandler {
 			},
 			warnings: [],
 		};
+	}
+}
+
+export class Image_Stp_V1 extends Image_Stp_Common {
+
+	static metadata() {
+		return {
+			...super.metadata(),
+			id: FORMAT_ID + '-v1',
+			title: 'Stamp image, version 1',
+			options: {},
+			glob: [
+				'*.stp',
+			],
+		};
+	}
+
+	static identify(content) {
+		return super.identifyByVersion(content, 1);
+	}
+
+	static read(content) {
+		return super.readByVersion(content, 1);
+	}
+
+	static write(content) {
+		return super.writeByVersion(content, 1);
+	}
+}
+
+export class Image_Stp_V2 extends Image_Stp_Common {
+
+	static metadata() {
+		return {
+			...super.metadata(),
+			id: FORMAT_ID + '-v2',
+			title: 'Stamp image, version 2',
+			options: {},
+			glob: [
+				'*.stp',
+			],
+		};
+	}
+
+	static identify(content) {
+		return super.identifyByVersion(content, 2);
+	}
+
+	static read(content) {
+		return super.readByVersion(content, 2);
+	}
+
+	static write(content) {
+		return super.writeByVersion(content, 2);
 	}
 }
