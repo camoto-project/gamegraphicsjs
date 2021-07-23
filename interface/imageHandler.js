@@ -299,7 +299,10 @@ export default class ImageHandler
 	 */
 	// eslint-disable-next-line no-unused-vars
 	static identify(content, filename, options) {
-		return false;
+		return {
+			valid: false,
+			reason: 'identify() has not implemented for this file format.',
+		};
 	}
 
 	/**
