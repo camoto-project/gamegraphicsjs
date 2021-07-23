@@ -228,7 +228,7 @@ class Operations
 			const tempImg = handler.read(content);
 			if (tempImg instanceof Image) {
 				console.log(` - Handler reports file is a single image with dimensions `
-					+ `${tempImg.dims.x}x${tempImg.dims.y}.`);
+					+ `${tempImg.width}x${tempImg.height}.`);
 			} else {
 				console.log(' - Handler reports file is a type that this utility does '
 					+ 'not support:', tempImg.constructor.name);
