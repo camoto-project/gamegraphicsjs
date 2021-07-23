@@ -129,11 +129,12 @@ export default class Image_PNG extends ImageHandler
 		}
 		debug(`Writing as ${png.depth}-bit (max pixel value is ${maxPixel})`);
 
-		if (image.palette) {
+		const pal = image.frames[0].palette || image.palette;
+		if (pal) {
 			// We could chop the palette down in size to the last colour actually used,
 			// but often it's nice to have the whole palette exported in a 256 colour
 			// image even if it doesn't use all 256 colours, so we'll leave it.
-			png.palette = image.palette.slice(0, 1 << png.depth);
+			png.palette = pal.slice(0, 1 << png.depth);
 		} else {
 			debug('Using default palette');
 			png.palette = defaultPalette(png.depth);
