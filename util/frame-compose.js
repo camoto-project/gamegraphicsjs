@@ -60,7 +60,6 @@ export function frameCompose(composition, options)
 		width = Math.max(width, cx);
 		height = Math.max(height, cy);
 	}
-	debug(`Final size: (${width},${height})`);
 
 	let bg = options.bg || 0;
 	if (options.palette) {
