@@ -34,8 +34,11 @@ export default class Image
 	 *   empty buffer is allocated and filled with palette index 0.
 	 *
 	 * @param {Palette} palette
-	 *   Colour palette to use.  Omit or specify null to use the default VGA
-	 *   palette.
+	 *   Global colour palette to use for all frames in the image (where the frame
+	 *   doesn't include its own palette.)  Omit or specify null to use the
+	 *   default 256-colour VGA palette.  Use one of the functions exported from
+	 *   `util/palette-default.js` for default CGA or EGA palettes (see
+	 *   img-raw-planar-4bpp.js for a 16-colour EGA example.)
 	 *
 	 * @param {Number} hotspotX
 	 *   Horizontal hotspot point, in pixels.  The hotspot is the position within

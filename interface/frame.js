@@ -36,8 +36,10 @@ export default class Frame
 	 *   empty buffer is allocated and filled with palette index 0.
 	 *
 	 * @param {Palette} palette
-	 *   Colour palette to use.  Omit or specify null to use the default VGA
-	 *   palette.
+	 *   Colour palette to use for this frame only.  Omit or specify null to use
+	 *   the palette from the parent Image instance.  Don't specify this property
+	 *   unless the file format has multiple frames, and supports each frame
+	 *   having a different palette.
 	 *
 	 * @param {Object} hotspot
 	 *   Pixel coordinate within the image that should appear at the location the
