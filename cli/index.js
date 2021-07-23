@@ -122,12 +122,14 @@ class Operations
 			throw new OperationsError('readpal: This file does not supply a palette.');
 		}
 
-		let count = 0;
-		for (const i of this.selectedFrames) {
-			i.palette = palNew;
-			count++;
+		// Set the new palette globally for the image.
+		this.image.palette = palNew;
+
+		// Remove any per-frame palette overrides.
+		for (const f of this.image.frames) {
+			f.palette = null;
 		}
-		console.log(`Applied new "${origFormat}" palette to ${count} frame(s).`);
+		console.log(`Applied new "${origFormat}" palette.`);
 	}
 
 	async write(params) {
