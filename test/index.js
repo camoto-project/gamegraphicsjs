@@ -46,6 +46,15 @@ const skipIdentify = {
 	'tls-cosmo': [
 		'img-raw-planar-4bpp',
 	],
+	'img-rol-v1': [
+		'img-pln',
+	],
+	'img-rol-v2': [
+		'img-pln',
+	],
+	'img-stp-v1': [
+		'img-pln',
+	],
 };
 
 // Override the default colours so we can actually see them
