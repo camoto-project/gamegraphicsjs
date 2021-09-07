@@ -106,21 +106,18 @@ export default class Palette_VGA_6bit_Papyrus extends ImageHandler {
 		};
 	}
 
+	// Note that this handler will return a sparse palette array for Papyrus
+	// palette files that are smaller than 256 colors. Any code that invokes
+	// this handler may need to combine multiple sparse palettes (or, more
+	// likely, overlay them on a full 256-color palette such as the VGA default)
+	// before any conversion to other image formats takes place.
 	static read(content) {
 		let palette = new Palette(256);
 		const numEntries = (content.main[2] == 0) ? 256 : content.main[2];
 		const startIndex = content.main[1];
 
-		// first initialize any leading palette entries to black if they
-		// fall before the index range used by this pal file
-		let i = 0;
-		while (i < startIndex) {
-			palette[i] = [0, 0, 0, 255];
-			i++;
-		}
-
-		// populate only the subset of the palette entries specified
-		// by the input file
+		// populate only the subset of the palette entries specified by the input file
+		let i = startIndex;
 		let p = 3;
 		while (i < (startIndex + numEntries)) {
 			palette[i] = [0, 0, 0, 255];
@@ -131,12 +128,6 @@ export default class Palette_VGA_6bit_Papyrus extends ImageHandler {
 				p++; // advance the input file position
 			}
 			i++; // advance the palette index
-		}
-
-		// finally, populate any remaining palette colors with black
-		while (i < 256) {
-			palette[i] = [0, 0, 0, 255];
-			i++;
 		}
 
 		return new Image({
