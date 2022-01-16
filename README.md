@@ -1,5 +1,5 @@
 # gamegraphics.js
-Copyright 2010-2021 Adam Nielsen <<malvineous@shikadi.net>>  
+Copyright 2010-2021 Adam Nielsen <<malvineous@shikadi.net>>
 
 This is a Javascript library that can read and write the custom image formats
 used by many MS-DOS games from the 1990s.  Both single-image files as well as
@@ -34,6 +34,8 @@ read and write the image.
 | Nomad                     | Alien animation cels     | img-del                 |
 | Nomad                     | Sprites                  | img-stp                 |
 | Nomad                     | Animation/related frames | img-rol                 |
+| Quarantine                | Full-screen / backdrops  | img-imagex              |
+| Quarantine                | Texture files            | tls-quarantine-spr      |
 
 ## Installation as an end-user
 

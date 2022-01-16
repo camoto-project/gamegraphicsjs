@@ -39,6 +39,7 @@ const skipTests = [
 const skipIdentify = {
 	'img-raw-linear-8bpp': [
 		'img-raw-planar-4bpp',
+		'tls-quarantine-spr',
 	],
 	'img-raw-planar-4bpp': [
 		'img-raw-linear-8bpp',
@@ -46,13 +47,22 @@ const skipIdentify = {
 	'tls-cosmo': [
 		'img-raw-planar-4bpp',
 	],
+	'img-pln': [
+		'tls-quarantine-spr',
+	],
 	'img-rol-v1': [
 		'img-pln',
+		'tls-quarantine-spr',
 	],
 	'img-rol-v2': [
 		'img-pln',
+		'tls-quarantine-spr',
 	],
 	'img-stp-v1': [
+		'img-pln',
+		'tls-quarantine-spr',
+	],
+	'tls-quarantine-spr': [
 		'img-pln',
 	],
 };
