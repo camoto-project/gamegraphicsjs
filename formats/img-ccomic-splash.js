@@ -25,19 +25,28 @@ const FORMAT_ID = 'img-ccomic-splash';
 import Debug from '../util/debug.js';
 const debug = Debug.extend(FORMAT_ID);
 
-import { RecordBuffer, RecordType } from '@camoto/record-io-buffer';
-import { cmp_rle_ccomic } from '@camoto/gamecomp';
+import {
+	RecordBuffer,
+	RecordType
+} from '@camoto/record-io-buffer';
+import {
+	cmp_rle_ccomic
+} from '@camoto/gamecomp';
 
 import ImageHandler from '../interface/imageHandler.js';
 import Image from '../interface/image.js';
 import Frame from '../interface/frame.js';
-import { fromPlanar, toPlanar } from '../util/frame-planar.js';
-import { paletteCGA16 } from '../util/palette-default.js';
+import {
+	fromPlanar,
+	toPlanar
+} from '../util/frame-planar.js';
+import {
+	paletteCGA16
+} from '../util/palette-default.js';
 
 const NUM_PLANES = 4;
 
-export default class Tileset_CComic_Sprite extends ImageHandler
-{
+export default class Image_CComic_Splash extends ImageHandler {
 	static metadata() {
 		let md = {
 			...super.metadata(),
@@ -84,20 +93,11 @@ export default class Tileset_CComic_Sprite extends ImageHandler
 	}
 
 	static read(content) {
-		let buffer = new RecordBuffer(content.main);
-		let lenPlane = buffer.read(RecordType.int.u16le);
+		const lenPlane = 8000;
 		let outbuf = new RecordBuffer(lenPlane * NUM_PLANES);
-		let offNextPlane = 2;
-		for (let p = 0; p < NUM_PLANES; p++) {
-			let lenRead = 0;
-			const cbLenRead = r => lenRead = r;
-			const decomp = cmp_rle_ccomic.reveal(buffer.getU8(offNextPlane), {
-				outputLength: 8000,
-				cbLenRead,
-			});
-			offNextPlane += lenRead;
-			outbuf.put(decomp);
-		}
+
+		const decomp = cmp_rle_ccomic.reveal(content.main);
+		outbuf.put(decomp);
 
 		const frame = new Frame({
 			pixels: fromPlanar({
@@ -134,15 +134,8 @@ export default class Tileset_CComic_Sprite extends ImageHandler
 
 		const lenPlane = 8000;
 		let output = new RecordBuffer(lenPlane * NUM_PLANES);
-
-		output.write(RecordType.int.u16le, lenPlane);
-		for (let p = 0; p < NUM_PLANES; p++) {
-			// Each plane must be compressed separately, RLE codes can't run across
-			// plane boundaries.
-			const planeData = raw.slice(p * lenPlane, (p+1) * lenPlane);
-			const cmp = cmp_rle_ccomic.obscure(planeData);
-			output.put(cmp);
-		}
+		const cmp = cmp_rle_ccomic.obscure(raw);
+		output.put(cmp);
 
 		return {
 			content: {
