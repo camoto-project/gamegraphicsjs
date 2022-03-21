@@ -301,7 +301,7 @@ class Image_Gif_Base extends ImageHandler {
 
 		let globalPal = new Palette(globalTableColorCount);
 
-		// If a local color table is being used...
+		// If a global color table is being used...
 		if (usingGlobalColor) {
 			for (let i = 0; i < globalTableColorCount; i++) {
 				let r = buffer.read(RecordType.int.u8);
@@ -465,6 +465,7 @@ class Image_Gif_Base extends ImageHandler {
 		let logicalDescPackedField = 0x00;
 		let useGlobalColor = false;
 		let globalColorResPower = 0;
+		let transparentIndex = -1;
 
 		// If we've been provided with a global palette...
 		if (image.palette !== undefined) {
@@ -486,6 +487,10 @@ class Image_Gif_Base extends ImageHandler {
 			}
 			logicalDescPackedField |= (globalColorResPower << 4);
 			logicalDescPackedField |= globalColorResPower;
+
+			// Find the first global color with a fully transparent alpha. If none
+			// are found, let this index variable remain at -1 as an indicator.
+			transparentIndex = image.palette.findIndex(p => p[3] === 0);
 		}
 
 		buffer.writeRecord(recordTypes.logicalScreenDescriptor, {
@@ -504,18 +509,24 @@ class Image_Gif_Base extends ImageHandler {
 			}
 		}
 
-		if (extensionsAllowed && (image.animation.length > 0)) {
-			// The only data that we currently support writing to the
-			// Graphic Control Extension is the delay time, and GIF only
-			// supports a single delay time across the entire animation.
-			// Just pick the first delay in the list.
+		// If this is a GIF revision that supports extensions, we can use the
+		// Graphics Control Extension to record the delay time (for animations)
+		// and/or a transparent color index from the global palette.
+		if (extensionsAllowed &&
+			((transparentIndex >= 0) || (image.animation.length > 0))) {
+
 			buffer.write(RecordType.int.u8, EXTENSION_INTRODUCER);
 			buffer.write(RecordType.int.u8, EXTENSION_TYPE_GFX_CTRL);
 			buffer.writeRecord(recordTypes.gfxCtrlExtension, {
 				byteSize: 0x04,
-				packedField: 0x00,
-				delayTime: Math.floor(image.animation[0].postDelay / 10),
-				transparentColorIndex: 0x00,
+				// The only relevant field in this 'Packed Fields' byte is the transparent color flag
+				// at bit 0, which is set only if there is a transparent color in the global palette.
+				packedField: (transparentIndex >= 0) ? 0x01 : 0x00,
+				// Use the delay from the first animation frame as the GIF animation delay. It is safe
+				// to use a delay of 0 if there is no multi-frame animation in the input image.
+				delayTime: (image.animation.length > 0) ?
+					Math.floor(image.animation[0].postDelay / 10) : 0,
+				transparentColorIndex: (transparentIndex >= 0) ? transparentIndex : 0x00,
 				blockTerminator: 0x00,
 			});
 		}
