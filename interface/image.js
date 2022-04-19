@@ -29,9 +29,13 @@ export default class Image
 	 * @param {Number} height
 	 *   Image height, in pixels.  As for `width`.
 	 *
-	 * @param {Uint8Array} pixels
-	 *   Optional image content to use, in 8bpp linear format.  If omitted, a new
-	 *   empty buffer is allocated and filled with palette index 0.
+	 * @param {Array<Frame>} frames
+	 *   Zero or more frames in the image.  A normal image (e.g. loaded from a PNG
+	 *   or JPEG file) will have just one frame containing the pixel data for the
+	 *   graphic.  Image sets may have multiple frames (e.g. a set of images for
+	 *   the player sprite in a game).  Animated images will have multiple frames,
+	 *   as well as the `animation` property below to control how the frames are
+	 *   displayed over time.
 	 *
 	 * @param {Palette} palette
 	 *   Global colour palette to use for all frames in the image (where the frame
