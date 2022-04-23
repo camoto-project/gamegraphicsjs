@@ -115,7 +115,7 @@ export default class Image_Pln extends ImageHandler {
 		if ((options.width === 0) && (image.frames[0].pixels.length > 0)) {
 			throw new Error(`Image width is given as 0 with non-zero pixel data.`);
 		}
-		
+
 		if ((options.width > 0) && (image.frames[0].pixels.length % options.width !== 0)) {
 			throw new Error(`Image pixel data length not evenly divisible by image width.`);
 		}

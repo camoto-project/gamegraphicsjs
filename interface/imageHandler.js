@@ -153,6 +153,21 @@ export default class ImageHandler
 				 */
 				tags: {},
 			},
+
+			/**
+			 * Key-value list of options that can be passed to read() and/or write().
+			 * Key is the option name, value is a human-readable explanation of what
+			 * the options is for, e.g. `options: { width: 'Image width' }`.
+			 *
+			 * Try to avoid passing format-specific options here such as which colour
+			 * depth to write, because most format handlers won't be able to pass
+			 * options in (it is mostly intended for when one format handler calls
+			 * another).  In most cases when options are needed, inherit from a base
+			 * class so each format has a separate handler (like how it is done with
+			 * `img-gif-87a` and `img-gif-89a`).  This means specific formats can be
+			 * listed, so a GIF98a file won't accidentally be written for a game that
+			 * only supports GIF87a, for example.
+			 */
 			options: {},
 		};
 	}
