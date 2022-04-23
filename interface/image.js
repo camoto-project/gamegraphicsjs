@@ -91,7 +91,7 @@ export default class Image
 	 */
 	clone(start = 0, count = this.frames.length) {
 		let selectedFrames = [];
-		for (let f = start; f < Math.min(start + count, this.frames.length); f++) {
+		for (let f = start; f < Math.min(start + count, this.frames.length - start); f++) {
 			selectedFrames.push(
 				this.frames[f].clone()
 			);
