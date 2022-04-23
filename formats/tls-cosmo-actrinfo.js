@@ -101,12 +101,13 @@ export default class Tileset_Cosmo_Masked extends ImageHandler
 		let fat = new RecordBuffer(contentFat);
 		let offset = fat.read(RecordType.int.u16le);
 		let offsets = [];
-		do {
+		while (fat.distFromEnd() > 2) {
 			offset *= 2; // units of uint16le
 			offsets.push(offset);
 			offset = fat.read(RecordType.int.u16le);
 			// Keep reading until we reach the first entry's offset.
-		} while (offsets.length * 2 < offsets[0]);
+			if (offsets.length * 2 >= offsets[0]) break;
+		}
 		offsets.push(contentFat.length);
 
 		let palette = paletteCGA16();
@@ -241,9 +242,9 @@ export default class Tileset_Cosmo_Masked extends ImageHandler
 					frameWidth: pxFrameWidth,
 				});
 
-				for (const frame of tsFrame) {
+				for (const tile of tsFrame) {
 					const pixels = toPlanar({
-						content: frame.pixels,
+						content: tile.pixels,
 						planeCount: 5,
 						planeWidth: 8,
 						lineWidth: 8,

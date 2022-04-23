@@ -39,7 +39,6 @@ describe(`Extra tests for ${md.title} [${md.id}]`, function() {
 				'zeroframes',
 				'badheader',
 				'toolong',
-				'7x7-2frame',
 			]);
 		});
 
@@ -76,15 +75,6 @@ describe(`Extra tests for ${md.title} [${md.id}]`, function() {
 			});
 
 		}); // identify()
-
-		describe('read()', function() {
-
-			it('should read the correct number of frames from multi-frame files', function() {
-				const rolImg = handler.read(content['7x7-2frame']);
-				assert.strictEqual(rolImg.frames.length, 2);
-			});
-
-		}); // read()
 
 	}); // I/O
 

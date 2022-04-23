@@ -191,8 +191,11 @@ for (const handler of gamegraphicsFormats) {
 
 		});
 
-		function testSize(width, height, message, count) {
-			const sizename = width + 'x' + height + ((count > 1) ? `-${count}` : '');
+		function testSize(width, height, message, icount, fcount) {
+			const sizename = width + 'x' + height
+				+ ((icount > 1) ? `-i${icount}` : '')
+				+ ((fcount > 1) ? `-f${fcount}` : '')
+			;
 			describe(`should handle dimensions of ${sizename} (${message})`, function () {
 				// Not all format handlers use this, but those that do all use the
 				// same keys.
@@ -216,12 +219,12 @@ for (const handler of gamegraphicsFormats) {
 					let image;
 					before('should read correctly', function() {
 						let sourceImage = handler.read(contentEncoded, options);
-						if (count === 1) {
+						if (icount === 1) {
 							image = sourceImage;
 						} else {
-							assert.ok(sourceImage.length >= count, `Not enough images in `
-								+ `sample file (got ${sourceImage.length}, needed ${count}).`);
-							image = sourceImage[count - 1];
+							assert.ok(sourceImage.length >= icount, `Not enough images in `
+								+ `sample file (got ${sourceImage.length}, needed ${icount}).`);
+							image = sourceImage[icount - 1];
 						}
 						assert.notStrictEqual(image, undefined);
 						assert.notStrictEqual(image.frames, undefined);
@@ -323,9 +326,9 @@ for (const handler of gamegraphicsFormats) {
 						const maxFrameCount = (md.limits.frameCount.max === undefined) ? 100 : md.limits.frameCount.max;
 						const frameCount = Math.max(
 							md.limits.frameCount.min,
-							Math.min(count, maxFrameCount)
+							Math.min(fcount, maxFrameCount)
 						);
-						let frames = [];
+						let frames = [], animation = [];
 						for (let f = 0; f < frameCount; f++) {
 							let frame = new Frame({
 								width,
@@ -338,6 +341,11 @@ for (const handler of gamegraphicsFormats) {
 							assert.notStrictEqual(frame, null);
 							assert.notStrictEqual(frame.pixels, undefined);
 							frames.push(frame);
+
+							animation.push({
+								index: f,
+								postDelay: 100,
+							});
 						}
 						const imgpal = md.limits.hasPalette ? createStandardPalette(md.limits.transparentIndex) : null;
 						const img = new Image({
@@ -345,11 +353,13 @@ for (const handler of gamegraphicsFormats) {
 							height,
 							frames,
 							palette: imgpal,
+							// Only include animation data if there is more than one frame.
+							animation: (frameCount > 1) ? animation : [],
 						});
 
 						// Duplicate it so we have an array of images.
 						images = [];
-						for (let i = 0; i < count; i++) {
+						for (let i = 0; i < icount; i++) {
 							images.push(img.clone());
 						}
 					});
@@ -361,7 +371,7 @@ for (const handler of gamegraphicsFormats) {
 									`BUG: Frame ${f} exists but has no pixel data.`);
 							}
 						}
-						const targetImage = (count === 1) ? images[0] : images;
+						const targetImage = (icount === 1) ? images[0] : images;
 						const warnings = handler.checkLimits(targetImage);
 						assert.ok(warnings.length === 0, 'Got unexpected warning: ' + warnings[0]);
 					});
@@ -370,7 +380,7 @@ for (const handler of gamegraphicsFormats) {
 						// Zero out the frame dimensions to force the image dimensions to
 						// be used.
 						let img2 = [];
-						for (let i = 0; i < count; i++) {
+						for (let i = 0; i < icount; i++) {
 							let cpyImage = images[i].clone();
 							for (const f of cpyImage.frames) {
 								f.width = undefined;
@@ -378,7 +388,7 @@ for (const handler of gamegraphicsFormats) {
 							}
 							img2.push(cpyImage);
 						}
-						const targetImage = (count === 1) ? img2[0] : img2;
+						const targetImage = (icount === 1) ? img2[0] : img2;
 
 						const { content: contentGenerated } = handler.write(targetImage, options);
 
@@ -390,13 +400,13 @@ for (const handler of gamegraphicsFormats) {
 						// The format handler should use the frame dimensions in preference
 						// to the image dimensions, if present.
 						let img2 = [];
-						for (let i = 0; i < count; i++) {
+						for (let i = 0; i < icount; i++) {
 							let cpyImage = images[i].clone();
 							cpyImage.width = 0;
 							cpyImage.height = 0;
 							img2.push(cpyImage);
 						}
-						const targetImage = (count === 1) ? img2[0] : img2;
+						const targetImage = (icount === 1) ? img2[0] : img2;
 
 						const { content: contentGenerated } = handler.write(targetImage, options);
 
@@ -432,7 +442,7 @@ for (const handler of gamegraphicsFormats) {
 				});
 
 			});
-		}
+		} // function testSize()
 
 		// If the max size is undefined, use 1024 as that should be large enough.
 		const maxDims = {
@@ -440,13 +450,13 @@ for (const handler of gamegraphicsFormats) {
 			y: (md.limits.maximumSize.y === undefined) ? 1024 : md.limits.maximumSize.y,
 		};
 
-		testSize(md.limits.minimumSize.x, md.limits.minimumSize.y, 'Minimum permitted size', 1);
+		testSize(md.limits.minimumSize.x, md.limits.minimumSize.y, 'Minimum permitted size', 1, 1);
 
 		if (
 			(md.limits.maximumSize.x > md.limits.minimumSize.x)
 			|| (md.limits.maximumSize.y > md.limits.minimumSize.y)
 		) {
-			testSize(maxDims.x, maxDims.y, 'Maximum permitted size', 1);
+			testSize(maxDims.x, maxDims.y, 'Maximum permitted size', 1, 1);
 		}
 
 		[
@@ -472,15 +482,33 @@ for (const handler of gamegraphicsFormats) {
 				&& (md.limits.multipleSize.x && (testDims.x % md.limits.multipleSize.x === 0))
 				&& (md.limits.multipleSize.y && (testDims.y % md.limits.multipleSize.y === 0))
 			) {
-				testSize(testDims.x, testDims.y, 'Standard test', 1);
+				testSize(testDims.x, testDims.y, 'Standard test', 1, 1);
+
+				// Run the test again with extra frames in each image, if supported.
+				if (
+					(md.limits.frameCount.max === undefined)
+					|| (md.limits.frameCount.max > 1)
+				) {
+					testSize(testDims.x, testDims.y, 'Standard test with two frames in a single image', 1, 2);
+				}
+
+				// Run the test again with extra images in each file, if supported.
 				if (
 					(md.limits.imageCount.max === undefined)
 					|| (md.limits.imageCount.max > 1)
 				) {
-					testSize(testDims.x, testDims.y, 'Standard test with array of two images', 2);
+					testSize(testDims.x, testDims.y, 'Standard test with array of two images', 2, 1);
+
+					// Run the test again with extra images in each file, and each image
+					// containing extra frames, if supported.
+					if (
+						(md.limits.frameCount.max === undefined)
+							|| (md.limits.frameCount.max > 1)
+					) {
+						testSize(testDims.x, testDims.y, 'Standard test with array of two images, each with two frames', 2, 2);
+					}
 				}
 			}
 		});
-
 	});
 }
