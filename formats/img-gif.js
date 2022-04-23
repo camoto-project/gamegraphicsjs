@@ -659,7 +659,7 @@ export class Image_Gif89a extends Image_Gif_Base {
 		return 'GIF89a';
 	}
 
-	static extensionsAllowed() {
+	static getExtensionsAllowed() {
 		return true;
 	}
 }
