@@ -251,10 +251,31 @@ class Operations
 			console.log(`Size: ${frameWidth}x${frameHeight}`);
 
 		} else if (this.image.frames) {
-			const imgWithDelay = this.image.frames.find(i => i.postDelay !== undefined);
+			const imgWithDelay = this.image.animation.find(i => i.postDelay !== undefined);
 			if (imgWithDelay) {
 				console.log('Type: Image list (animation)');
 				console.log(`Number of frames: ${this.image.frames.length}`);
+
+				let strDims = 'None';
+				if ((this.image.width !== undefined) && (this.image.height !== undefined)) {
+					strDims = this.image.width + 'x' + this.image.height;
+				}
+				console.log('Image dimensions:', strDims);
+
+				for (let f = 0; f < this.image.frames.length; f++) {
+					const frame = this.image.frames[f];
+
+					let strDims = '(inherit from image)';
+					if ((frame.width !== undefined) && (frame.height !== undefined)) {
+						strDims = frame.width + 'x' + frame.height;
+					}
+					console.log(` - Frame ${f}: ${strDims}`);
+				}
+
+				for (let i = 0; i < this.image.animation.length; i++) {
+					const anim = this.image.animation[i];
+					console.log(` - Animation tick ${i}: Draw frame ${anim.index}, wait ${anim.postDelay} ms`);
+				}
 
 			} else {
 				console.log('Type: Image list (tileset)');
