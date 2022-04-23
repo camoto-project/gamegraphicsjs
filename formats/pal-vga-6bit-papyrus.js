@@ -31,7 +31,7 @@ import {
 	pal8_to_6
 } from '../util/palette-default.js';
 
-export default class Palette_VGA_6bit_Papyrus extends ImageHandler {
+export class pal_vga_6bit_papyrus extends ImageHandler {
 	static metadata() {
 		let md = {
 			...super.metadata(),

@@ -28,7 +28,7 @@ import Frame from '../interface/frame.js';
 
 const nullCo = (v, d) => ((v === null) || (v === undefined)) ? d : v;
 
-export default class Image_Raw_8bpp_Linear extends ImageHandler
+export class img_raw_linear_8bpp extends ImageHandler
 {
 	static metadata() {
 		let md = {

@@ -38,7 +38,7 @@ const WIDTH_HEIGHT_PAIR_SIZE = 2;
  * The Quarantine sprite package is a simple concatenation of raw VGA images,
  * with basic header information to enumerate them.
  */
-export default class Tileset_Quarantine_Sprite extends ImageHandler {
+export class tls_quarantine_spr extends ImageHandler {
 	static metadata() {
 		let md = {
 			...super.metadata(),

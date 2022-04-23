@@ -43,7 +43,7 @@ const recordTypes = {
 	},
 };
 
-export default class Tileset_CComic_Map extends ImageHandler
+export class tls_ccomic_map extends ImageHandler
 {
 	static metadata() {
 		let md = {

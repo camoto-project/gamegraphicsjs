@@ -21,7 +21,7 @@
 import assert from 'assert';
 import TestUtil from './util.js';
 import {
-	Image_Stp_V1 as handler
+	img_stp_v1 as handler
 } from '../index.js';
 
 const md = handler.metadata();

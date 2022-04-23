@@ -44,7 +44,7 @@ const recordTypes = {
 	},
 };
 
-export default class Tileset_Cosmo_Masked extends ImageHandler
+export class tls_cosmo_actrinfo extends ImageHandler
 {
 	static metadata() {
 		let md = {

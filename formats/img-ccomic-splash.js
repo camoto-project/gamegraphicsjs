@@ -46,7 +46,7 @@ import {
 
 const NUM_PLANES = 4;
 
-export default class Image_CComic_Splash extends ImageHandler {
+export class img_ccomic_splash extends ImageHandler {
 	static metadata() {
 		let md = {
 			...super.metadata(),

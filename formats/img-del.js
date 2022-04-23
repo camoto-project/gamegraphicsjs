@@ -48,7 +48,7 @@ const deltaTable = [0, 1, 2, 3, 4, 5, 6, 7, -8, -7, -6, -5, -4, -3, -2, -1];
 const NEGATIVE_DELTA_LIMIT = -8;
 const POSITIVE_DELTA_LIMIT = 7;
 
-export default class Image_Del extends ImageHandler {
+export class img_del extends ImageHandler {
 	static metadata() {
 		let md = {
 			...super.metadata(),

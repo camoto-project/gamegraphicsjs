@@ -17,24 +17,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-export { default as img_png } from './img-png.js';
-export { default as img_del } from './img-del.js';
-export { default as img_pln } from './img-pln.js';
-export { default as img_raw_linear_8bpp } from './img-raw-linear-8bpp.js';
-export { default as img_raw_planar_4bpp } from './img-raw-planar-4bpp.js';
-export { default as img_ccomic_splash } from './img-ccomic-splash.js';
+export * from './img-png.js';
+export * from './img-del.js';
+export * from './img-pln.js';
+export * from './img-raw-linear-8bpp.js';
+export * from './img-raw-planar-4bpp.js';
+export * from './img-ccomic-splash.js';
 export * from './img-stp.js';
 export * from './img-rol.js';
 export * from './img-gif.js';
 
-export { default as pal_vga_6bit } from './pal-vga-6bit.js';
-export { default as pal_vga_6bit_papyrus } from './pal-vga-6bit-papyrus.js';
-export { default as pal_vga_8bit } from './pal-vga-8bit.js';
+export * from './pal-vga-6bit.js';
+export * from './pal-vga-6bit-papyrus.js';
+export * from './pal-vga-8bit.js';
 
-export { default as tls_ccomic_map } from './tls-ccomic-map.js';
-export { default as tls_ccomic_sprite } from './tls-ccomic-sprite.js';
-export { default as tls_cosmo } from './tls-cosmo.js';
-export { default as tls_cosmo_masked } from './tls-cosmo-masked.js';
-export { default as tls_cosmo_actrinfo } from './tls-cosmo-actrinfo.js';
+export * from './tls-ccomic-map.js';
+export * from './tls-ccomic-sprite.js';
+export * from './tls-cosmo.js';
+export * from './tls-cosmo-masked.js';
+export * from './tls-cosmo-actrinfo.js';
 export * from './tls-ddave.js';
-export { default as tls_quarantine_spr } from './tls-quarantine-spr.js';
+export * from './tls-quarantine-spr.js';

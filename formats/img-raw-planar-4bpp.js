@@ -30,7 +30,7 @@ import { paletteCGA16 } from '../util/palette-default.js';
 
 const nullCo = (v, d) => ((v === null) || (v === undefined)) ? d : v;
 
-export default class Image_Raw_4bpp_Planar extends ImageHandler
+export class img_raw_planar_4bpp extends ImageHandler
 {
 	static metadata() {
 		let md = {

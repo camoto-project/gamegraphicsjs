@@ -27,7 +27,7 @@ import Image from '../interface/image.js';
 import Palette from '../interface/palette.js';
 import { pal6_to_8, pal8_to_6 } from '../util/palette-default.js';
 
-export default class Palette_VGA_6bit extends ImageHandler
+export class pal_vga_6bit extends ImageHandler
 {
 	static metadata() {
 		let md = {

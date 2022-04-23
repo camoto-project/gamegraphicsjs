@@ -33,7 +33,7 @@ import { paletteCGA16 } from '../util/palette-default.js';
 
 const BYTES_PER_TILE = 160;
 
-export default class Tileset_CComic_Sprite extends ImageHandler
+export class tls_ccomic_sprite extends ImageHandler
 {
 	static metadata() {
 		let md = {

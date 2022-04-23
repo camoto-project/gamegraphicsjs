@@ -21,7 +21,7 @@
 import assert from 'assert';
 import TestUtil from './util.js';
 import {
-	Image_Rol_V1 as handler
+	img_rol_v1 as handler
 } from '../index.js';
 
 const md = handler.metadata();

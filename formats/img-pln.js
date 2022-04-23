@@ -38,7 +38,7 @@ const recordTypes = {
 
 const PLN_HEADER_SIZE_BYTES = 2;
 
-export default class Image_Pln extends ImageHandler {
+export class img_pln extends ImageHandler {
 	static metadata() {
 		let md = {
 			...super.metadata(),

@@ -26,7 +26,7 @@ import ImageHandler from '../interface/imageHandler.js';
 import Image from '../interface/image.js';
 import Palette from '../interface/palette.js';
 
-export default class Palette_VGA_8bit extends ImageHandler
+export class pal_vga_8bit extends ImageHandler
 {
 	static metadata() {
 		let md = {

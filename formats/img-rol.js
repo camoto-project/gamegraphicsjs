@@ -31,8 +31,8 @@ import ImageHandler from '../interface/imageHandler.js';
 import Image from '../interface/image.js';
 import Frame from '../interface/frame.js';
 import {
-	Image_Stp_V1 as stpHandlerV1,
-	Image_Stp_V2 as stpHandlerV2,
+	img_stp_v1 as stpHandlerV1,
+	img_stp_v2 as stpHandlerV2,
 } from '../index.js';
 
 const recordTypes = {
@@ -54,7 +54,7 @@ const STP_V2_HEADER_SIZE_BYTES = 8;
  * The version of the ROL file is defined to match the version of the
  * contained STP images.
  */
-class Image_Rol_Common extends ImageHandler {
+class img_rol_common extends ImageHandler {
 	static metadata() {
 		let md = super.metadata();
 		md.limits.minimumSize.x = 0;
@@ -270,7 +270,7 @@ class Image_Rol_Common extends ImageHandler {
 	}
 }
 
-export class Image_Rol_V1 extends Image_Rol_Common {
+export class img_rol_v1 extends img_rol_common {
 
 	static metadata() {
 		return {
@@ -297,7 +297,7 @@ export class Image_Rol_V1 extends Image_Rol_Common {
 	}
 }
 
-export class Image_Rol_V2 extends Image_Rol_Common {
+export class img_rol_v2 extends img_rol_common {
 
 	static metadata() {
 		return {

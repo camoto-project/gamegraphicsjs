@@ -30,7 +30,7 @@ import Frame from '../interface/frame.js';
 import Palette from '../interface/palette.js';
 import { defaultPalette } from '../util/palette-default.js';
 
-export default class Image_PNG extends ImageHandler
+export class img_png extends ImageHandler
 {
 	static metadata() {
 		let md = {

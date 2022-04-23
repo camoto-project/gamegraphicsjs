@@ -58,7 +58,7 @@ const MAX_DIRECT_SEQUENCE_LEN = 0x3F;
  * value was observed to always be 1. Later STP files (Version 2) do not
  * contain this extra word.
  */
-class Image_Stp_Common extends ImageHandler {
+class img_stp_common extends ImageHandler {
 	static metadata() {
 		let md = super.metadata();
 
@@ -402,7 +402,7 @@ class Image_Stp_Common extends ImageHandler {
 	}
 }
 
-export class Image_Stp_V1 extends Image_Stp_Common {
+export class img_stp_v1 extends img_stp_common {
 
 	static metadata() {
 		return {
@@ -429,7 +429,7 @@ export class Image_Stp_V1 extends Image_Stp_Common {
 	}
 }
 
-export class Image_Stp_V2 extends Image_Stp_Common {
+export class img_stp_v2 extends img_stp_common {
 
 	static metadata() {
 		return {

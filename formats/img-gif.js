@@ -93,7 +93,7 @@ const recordTypes = {
  * magic word in the header. As a result, GIF support is implemented here with
  * a common base class from which variants may derive.
  */
-class Image_Gif_Base extends ImageHandler {
+class img_gif_base extends ImageHandler {
 
 	static getMagicWord() {
 		return '';
@@ -650,7 +650,7 @@ class Image_Gif_Base extends ImageHandler {
 	}
 }
 
-export class Image_Gif87a extends Image_Gif_Base {
+export class img_gif_87a extends img_gif_base {
 
 	static metadata() {
 		return {
@@ -669,7 +669,7 @@ export class Image_Gif87a extends Image_Gif_Base {
 	}
 }
 
-export class Image_Gif89a extends Image_Gif_Base {
+export class img_gif_89a extends img_gif_base {
 
 	static metadata() {
 		let md = super.metadata();
@@ -697,7 +697,7 @@ export class Image_Gif89a extends Image_Gif_Base {
 	}
 }
 
-export class Image_Imagex extends Image_Gif87a {
+export class img_imagex extends img_gif_87a {
 
 	static metadata() {
 		return {

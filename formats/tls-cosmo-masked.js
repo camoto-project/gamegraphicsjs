@@ -33,7 +33,7 @@ import { paletteCGA16 } from '../util/palette-default.js';
 
 const BYTES_PER_TILE = 8 * 5;
 
-export default class Tileset_Cosmo_Masked extends ImageHandler
+export class tls_cosmo_masked extends ImageHandler
 {
 	static metadata() {
 		let md = {
