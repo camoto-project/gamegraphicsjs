@@ -35,6 +35,7 @@ const LOGICAL_SCREEN_DESC_LEN = 7;
 
 const EXTENSION_INTRODUCER = 0x21;
 const EXTENSION_TYPE_GFX_CTRL = 0xF9;
+const EXTENSION_TYPE_APPLICATION = 0xFF;
 
 const IMG_DESC_INTRODUCER = 0x2C;
 const TRAILER = 0x3B;
@@ -62,6 +63,17 @@ const recordTypes = {
 		packedField: RecordType.int.u8,
 		delayTime: RecordType.int.u16le,
 		transparentColorIndex: RecordType.int.u8,
+		blockTerminator: RecordType.int.u8, // always 0x00
+	},
+
+	// This record is for the Netscape extension that allows animation looping.
+	appExtensionNetscape: {
+		byteSize: RecordType.int.u8, // always 0x0B
+		identifier: RecordType.string.fixed.noTerm(8), // always "NETSCAPE"
+		appCode: RecordType.string.fixed.noTerm(3), // always "2.0"
+		lenSubBlock: RecordType.int.u8, // always 3
+		lenUnknown: RecordType.int.u8, // always 1
+		loopCount: RecordType.int.u16le,
 		blockTerminator: RecordType.int.u8, // always 0x00
 	},
 
@@ -430,7 +442,7 @@ class Image_Gif_Base extends ImageHandler {
 		return finalImg;
 	}
 
-	static write(image) {
+	static write(image, options = {}) {
 
 		const headerMagicWord = this.getMagicWord();
 		const extensionsAllowed = this.getExtensionsAllowed();
@@ -514,6 +526,24 @@ class Image_Gif_Base extends ImageHandler {
 		// and/or a transparent color index from the global palette.
 		if (extensionsAllowed &&
 			((transparentIndex >= 0) || (image.animation.length > 0))) {
+
+			// The loop count extension must immediately follow the global color
+			// table.  Defaults to 0 (loop forever) but a specific number of loops can
+			// be supplied.  `null` means omit the loop block entirely.
+			const loopCount = (options.loop === undefined) ? 0 : options.loop;
+			if (loopCount !== null) {
+				buffer.write(RecordType.int.u8, EXTENSION_INTRODUCER);
+				buffer.write(RecordType.int.u8, EXTENSION_TYPE_APPLICATION);
+				buffer.writeRecord(recordTypes.appExtensionNetscape, {
+					byteSize: 0x0B,
+					identifier: 'NETSCAPE',
+					appCode: '2.0',
+					lenSubBlock: 0x03,
+					lenUnknown: 0x01,
+					loopCount: loopCount,
+					blockTerminator: 0x00,
+				});
+			}
 
 			buffer.write(RecordType.int.u8, EXTENSION_INTRODUCER);
 			buffer.write(RecordType.int.u8, EXTENSION_TYPE_GFX_CTRL);
@@ -648,7 +678,10 @@ export class Image_Gif89a extends Image_Gif_Base {
 			...md,
 			id: 'img-gif-89a',
 			title: 'GIF 89a',
-			options: {},
+			options: {
+				loop: 'Number of times to loop if the image is animated, 0=forever, '
+					+ 'null=omit loop block entirely',
+			},
 			glob: [
 				'*.gif',
 			],
@@ -671,7 +704,6 @@ export class Image_Imagex extends Image_Gif87a {
 			...super.metadata(),
 			id: 'img-imagex',
 			title: 'Imagexcel IMG',
-			options: {},
 			glob: [
 				'*.img',
 			],
