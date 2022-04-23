@@ -561,6 +561,8 @@ class img_gif_base extends ImageHandler {
 			});
 		}
 
+		// TODO: This writes out frames as-is, but it needs to read image.animation
+		// and look at the `index` property to figure out which frame to write.
 		for (let f = 0; f < image.frames.length; f++) {
 
 			// Begin building the image descriptor
